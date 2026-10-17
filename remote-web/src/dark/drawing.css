@@ -1,0 +1,96 @@
+.ink-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+
+.ink-dot[aria-pressed='true'] {
+  border-color: var(--text);
+  transform: scale(1.12);
+}
+
+.ink-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  touch-action: none;
+}
+
+/* The wall, as large as the screen allows; turned sideways on a portrait phone. */
+.ink-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.ink-backdrop {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.ink-backdrop .screen-preview {
+  border: none;
+  border-radius: 0;
+  height: 100%;
+}
+
+.ink-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Drawing: the wall fills the screen ── */
+
+.drawing-screen {
+  position: relative;
+  gap: 0;
+  background: #000;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+.drawing-screen .ink-stage {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.ink-bar {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 12px;
+  border-radius: 30px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  transition: opacity 0.2s;
+}
+
+/* Out of the way while a stroke is being drawn under it. */
+.ink-bar[data-faded] {
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.ink-done {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  background: var(--ink);
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+}

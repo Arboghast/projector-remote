@@ -1,0 +1,10 @@
+**
+!gradlew
+!gradle/
+!settings.gradle.kts
+!build.gradle.kts
+!src/main/
+!remote-web/
+remote-web/node_modules/
+remote-web/dist/
+!tools/ink-overlay.apk

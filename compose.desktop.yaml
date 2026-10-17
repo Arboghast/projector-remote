@@ -1,0 +1,7 @@
+# For trying the image on Docker Desktop (Windows/macOS), where host networking may be unavailable:
+#   docker compose -f compose.yaml -f compose.desktop.yaml up --build
+services:
+  remote:
+    network_mode: bridge
+    ports:
+      - "8790:8790"

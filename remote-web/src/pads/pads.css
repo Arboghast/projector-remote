@@ -1,0 +1,49 @@
+.pads {
+  max-width: 1100px;
+}
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.segmented button {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 15px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.pad {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: radial-gradient(circle at 50% 40%, var(--surface-raised), var(--surface));
+  border: 1px solid var(--border);
+  touch-action: none;
+}
+
+.pad:active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.pad-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.7;
+  text-align: center;
+  pointer-events: none;
+}

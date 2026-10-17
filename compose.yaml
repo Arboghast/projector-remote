@@ -1,0 +1,33 @@
+# `./deploy.sh` pulls and rebuilds. Settings live in .env (copy .env.example).
+services:
+  remote:
+    build: .
+    restart: unless-stopped
+    # Host networking: adb reaches the projector on the LAN, and phones reach port 8790 directly.
+    network_mode: host
+    environment:
+      PROJECTOR_ADB: ${PROJECTOR_ADB:-192.168.1.5:5555}
+      PORT: ${PORT:-8790}
+    volumes:
+      - ./data:/data
+      # adb's key: keeps the projector's "allow USB debugging" approval across rebuilds.
+      - ./data/adb:/root/.android
+
+  # Optional HTTPS entry point at https://<TS_HOSTNAME>.<tailnet>.ts.net. Enable with COMPOSE_PROFILES=tailscale.
+  tailscale:
+    profiles: [tailscale]
+    image: tailscale/tailscale:stable
+    restart: unless-stopped
+    # Its own network, not the host's: otherwise it sees and advertises every port on the Pi,
+    # duplicating the Pi's own Tailscale (and subnet routes) in the tailnet's discovered services.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      TS_HOSTNAME: ${TS_HOSTNAME:-projector}
+      TS_STATE_DIR: /var/lib/tailscale
+      # Userspace mode: no tun device, so it needs no extra privileges.
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - ./data/tailscale:/var/lib/tailscale
+      - ./tailscale:/config:ro

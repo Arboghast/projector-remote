@@ -1,0 +1,38 @@
+# Build output
+.gradle/
+.kotlin/
+build/
+remote-web/node_modules/
+remote-web/dist/
+overlay-app/build/
+
+# Downloads and generated binaries (see README for how to get or build them)
+tools/android-sdk/
+tools/downloads/
+tools/scrcpy-server-*
+tools/ink-overlay.apk.idsig
+
+# Local signing key, created by overlay-app/build.ps1
+overlay-app/debug.keystore
+
+# Your saved links
+shelf.json
+
+# Editors and logs
+.idea/
+.vscode/
+*.log
+
+# Local-only notes and one-off tools (kept on disk, not in the repo)
+docs/README.md
+docs/design/
+docs/reports/
+tools/bench/
+tools/icons/
+
+# Your relay address for the browser extension (copy config.example.js)
+browser-extension/config.js
+
+# The server's data (Shelf, adb key, Tailscale state) and settings
+data/
+.env

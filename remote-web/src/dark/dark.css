@@ -1,0 +1,112 @@
+.dark {
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.dark-surface {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.dark-surface .pad {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  pointer-events: none;
+}
+
+.dark-legend li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dark-legend li > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dark-glyph {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 14px;
+}
+
+.dark-glyph[data-kind='move'] { color: var(--warn); }
+.dark-glyph[data-kind='ok'] { color: var(--ok); }
+.dark-glyph[data-kind='back'] { color: var(--coral); }
+.dark-glyph[data-kind='scroll'] { color: var(--accent); }
+.dark-glyph[data-kind='menu'] { color: var(--text-muted); }
+
+.dark-gesture {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.dark-legend-foot {
+  padding-top: 8px;
+  line-height: 1.5;
+}
+
+.dark .text-entry {
+  margin: 0 16px 10px;
+}
+
+.dark-tray {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  opacity: 0.35;
+}
+
+/* Unfolded Fold: the legend sits in two columns so it fits without scrolling. */
+@media (min-width: 700px) {
+  .dark-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: 760px;
+  }
+
+  .dark-legend li {
+    flex: 1 1 45%;
+  }
+}
+
+/* ── Drawing ── */
+
+
+
+
+
+
+
+
+
+
+
+/* The pad itself is invisible in Dark: black on black, felt rather than seen. */
+.dark .dark-pad {
+  background: transparent;
+  border: none;
+  align-items: center;
+}

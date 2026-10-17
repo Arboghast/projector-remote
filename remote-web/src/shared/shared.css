@@ -1,0 +1,744 @@
+/* ── Layout shell: every layout fills the screen and keeps clear of notches and home bars ── */
+
+.layout {
+  --app: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  height: 100%;
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none; /* iOS would otherwise pop a callout when a control is held */
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.topbar-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Connection dot ── */
+
+.link {
+  --link: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.link[data-link='ready'] { --link: var(--ok); }
+.link[data-link='projector-off'] { --link: var(--warn); }
+.link[data-link='relay-down'] { --link: var(--danger); }
+
+.link-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--link);
+  box-shadow: 0 0 10px var(--link);
+}
+
+/* ── App identity ── */
+
+.app-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--app);
+}
+
+.app-tile {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app) 16%, var(--bg));
+}
+
+.app-tile > span {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--app);
+}
+
+/* ── Buttons ── */
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  color: var(--text-muted);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-button:active {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.round-button {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 26px;
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.round-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.listening {
+  color: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.chip {
+  height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.chip:disabled {
+  opacity: 0.4;
+}
+
+.chip-accent {
+  background: var(--accent);
+  color: #fff;
+}
+
+.pill {
+  height: 34px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 17px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.pill svg {
+  width: 14px;
+  height: 14px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 14px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.action svg {
+  width: 22px;
+  height: 22px;
+}
+
+.action:active {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+@keyframes pulse {
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 25%, transparent); }
+}
+
+/* ── Trackpad ── */
+
+.trackpad {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: radial-gradient(circle at 50% 40%, var(--surface-raised), var(--surface));
+  border: 1px solid var(--border);
+  touch-action: none;
+}
+
+.trackpad:active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.trackpad-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ── D-pad ── */
+
+.dpad {
+  --size: min(62vw, 240px);
+  align-self: center;
+  width: var(--size);
+  height: var(--size);
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+/* Flex order lays the cross out as up / left·ok·right / down. */
+.dpad-up { order: 1; }
+.dpad-left { order: 2; }
+.dpad-ok { order: 3; }
+.dpad-right { order: 4; }
+.dpad-down { order: 5; }
+.dpad-up,
+.dpad-down { flex-basis: 100%; }
+
+.dpad-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 0.3 + 0.36 + 0.3 keeps the middle row (and the column) inside the circle. */
+  height: calc(var(--size) * 0.3);
+  min-width: calc(var(--size) * 0.3);
+  color: var(--text-muted);
+  border-radius: 50%;
+  transition: color 0.12s, transform 0.12s;
+}
+
+.dpad-arrow svg {
+  width: 26px;
+  height: 26px;
+}
+
+.dpad-arrow:active {
+  color: var(--text);
+  transform: scale(0.9);
+}
+
+.dpad-ok {
+  width: calc(var(--size) * 0.36);
+  height: calc(var(--size) * 0.36);
+  border-radius: 50%;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  transition: transform 0.12s, background 0.12s;
+}
+
+.dpad-ok:active {
+  transform: scale(0.94);
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface-raised));
+}
+
+/* ── Screen preview ── */
+
+.screen-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  flex: none;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  touch-action: none;
+}
+
+.screen-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.screen-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  background: #000;
+  transform-origin: 0 0;
+}
+
+.screen-preview[data-stale='true'] img {
+  opacity: 0.4;
+}
+
+.screen-preview-wait {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.screen-live {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--app);
+  box-shadow: 0 0 8px var(--app);
+}
+
+.screen-preview[data-stale='true'] .screen-live {
+  background: var(--warn);
+  box-shadow: none;
+}
+
+.screen-ripple {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  border: 2px solid var(--app);
+  background: color-mix(in srgb, var(--app) 25%, transparent);
+  pointer-events: none;
+  animation: ripple 0.6s ease-out forwards;
+}
+
+@keyframes ripple {
+  to { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Shelf ── */
+
+.shelf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.shelf-card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.shelf-under {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.shelf-card[data-reveal='project'] .shelf-under { background: var(--accent); }
+.shelf-card[data-reveal='dismiss'] .shelf-under { background: var(--danger); justify-content: flex-end; }
+
+.shelf-face {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 0 8px 0 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  touch-action: pan-y;
+}
+
+.shelf-compact .shelf-face {
+  min-height: 62px;
+}
+
+.shelf-compact .app-tile {
+  width: 36px;
+  height: 36px;
+}
+
+.shelf-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.shelf-title {
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.shelf-text .muted {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shelf-empty {
+  margin: 0;
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ── Composer ── */
+
+.composer {
+  display: flex;
+  flex-direction: column-reverse; /* suggestions (first in the markup) open under the field */
+  gap: 8px;
+  flex: none;
+}
+
+/* Low on the screen the suggestions open upward, clear of the keyboard. */
+.composer-above {
+  flex-direction: column;
+}
+
+.composer-row {
+  display: flex;
+  gap: 10px;
+}
+
+.composer-options {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.composer-options button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  text-align: left;
+  color: var(--text);
+}
+
+.composer-options button span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.composer-options button svg {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* An address you typed is the likeliest pick, so it carries the accent. */
+.composer-options button[data-kind='link'] svg {
+  color: var(--accent);
+}
+
+.composer-options button:active {
+  background: var(--surface-raised);
+}
+
+.composer-field {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 0 18px;
+  border-radius: 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.composer-field:focus-within {
+  border-color: var(--accent);
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* below 16px iOS zooms the page on focus */
+  outline: none;
+}
+
+.composer .chip {
+  height: 40px;
+  border-radius: 20px;
+}
+
+/* ── Now playing ── */
+
+
+
+
+
+
+
+
+
+
+
+.now-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 4px 0 16px;
+  border-radius: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  flex: none;
+}
+
+.now-pill-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Text entry ── */
+
+.text-entry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  animation: rise 0.18s ease-out;
+  flex: none;
+}
+
+.text-entry input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+.text-entry input:focus {
+  border-color: var(--accent);
+}
+
+.text-entry-keys {
+  flex-basis: 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.text-entry-keys .chip:last-child {
+  margin-left: auto;
+}
+
+/* ── Sheets, toasts ── */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.6);
+  animation: fade 0.15s ease-out;
+}
+
+.sheet {
+  width: min(100%, 560px);
+  max-height: 85%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 10px 16px max(20px, env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  animation: rise 0.2s ease-out;
+}
+
+.sheet-grip {
+  align-self: center;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  top: max(44px, calc(env(safe-area-inset-top) + 32px));
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
+  font-size: 13px;
+  animation: fade 0.18s ease-out;
+}
+
+@keyframes rise {
+  from { transform: translateY(12px); opacity: 0; }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+}
+
+/* ── Playback row ── */
+
+/* Playback, shown only while something is playing. */
+.playback {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.playback-gap {
+  flex: 1;
+}
+
+.playback-chip {
+  height: 36px;
+  min-width: 44px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font: 600 13px var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.04em;
+}
+
+.playback-chip:active {
+  background: var(--border);
+}
+
+.playback-play {
+  color: var(--app);
+}
+
+/* ── Corner bar (Dark, Theatre) ── */
+
+.corner-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 0 8px;
+  opacity: 0.5;
+}
+

@@ -1,0 +1,75 @@
+.shelf {
+  max-width: 1100px;
+}
+
+.shelf-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 28px;
+}
+
+.shelf-main {
+  flex: 1;
+  min-width: 0; /* without this a long now-playing title widens the page past the screen */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shelf-main .shelf-list {
+  flex: 1;
+}
+
+.shelf-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.shelf-heading h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.shelf-tip {
+  margin: -4px 0 0;
+  text-align: center;
+}
+
+.shelf-remote-toggle {
+  align-self: center;
+  flex: none;
+}
+
+.shelf-remote {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 0;
+}
+
+/* On a phone the remote lives in a sheet; on the unfolded Fold it sits beside the queue. */
+.shelf-side {
+  display: none;
+}
+
+@media (min-width: 700px) {
+  .shelf-side {
+    display: flex;
+    flex: 0 0 min(40%, 360px);
+    align-items: center;
+  }
+
+  .shelf-side .shelf-remote {
+    width: 100%;
+  }
+
+  .shelf-remote-toggle {
+    display: none;
+  }
+}
