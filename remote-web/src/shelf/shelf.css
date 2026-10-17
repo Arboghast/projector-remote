@@ -41,11 +41,6 @@
   text-align: center;
 }
 
-.shelf-remote-toggle {
-  align-self: center;
-  flex: none;
-}
-
 .shelf-remote {
   display: flex;
   flex-direction: column;
@@ -53,7 +48,7 @@
   padding: 8px 0;
 }
 
-/* On a phone the remote lives in a sheet; on the unfolded Fold it sits beside the queue. */
+/* On the unfolded Fold the remote sits beside the queue; on a phone the queue has the screen. */
 .shelf-side {
   display: none;
 }
@@ -67,9 +62,5 @@
 
   .shelf-side .shelf-remote {
     width: 100%;
-  }
-
-  .shelf-remote-toggle {
-    display: none;
   }
 }

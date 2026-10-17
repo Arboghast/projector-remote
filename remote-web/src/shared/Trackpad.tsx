@@ -1,7 +1,6 @@
 import { useRef, type PointerEvent } from 'react'
-import { useFrameBatch } from '../pads/usePad'
 import type { RemoteCommand } from '../relay'
-import { scrollCommand } from './scroll'
+import { useScroll } from './scroll'
 
 const TAP_SLOP_PX = 10
 const TAP_MAX_MS = 300
@@ -11,7 +10,7 @@ type Props = { send: (command: RemoteCommand) => void }
 /** Classic's pad: drag scrolls the page as one continuous drag on the wall; a tap is OK. */
 export function Trackpad({ send }: Props) {
   const gesture = useRef({ id: -1, x: 0, y: 0, startX: 0, startY: 0, startedAt: 0, moved: false })
-  const scroll = useFrameBatch((dx, dy) => send(scrollCommand(dx, dy)))
+  const scroll = useScroll(send)
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     try {

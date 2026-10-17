@@ -10,8 +10,8 @@ type Props = {
 
 /**
  * The phone's keyboard, only while a text field on the wall is waiting (the projector's on-screen
- * keyboard is up). Return types the text and presses Enter on the wall; Done hides it until the
- * next field.
+ * keyboard is up). Go types the text and presses Enter on the wall; closing it also closes the
+ * wall's keyboard, so the two never disagree.
  */
 export function WallTyping({ state, send }: Props) {
   const [dismissed, setDismissed] = useState(false)
@@ -19,7 +19,12 @@ export function WallTyping({ state, send }: Props) {
     if (!state.keyboard) setDismissed(false)
   }, [state.keyboard])
   if (!state.keyboard || dismissed) return null
-  return <TextEntry send={send} onClose={() => setDismissed(true)} />
+  const close = () => {
+    // Back is what puts away Android's keyboard and leaves the field.
+    send({ type: 'key', key: 'back' })
+    setDismissed(true)
+  }
+  return <TextEntry send={send} onClose={close} />
 }
 
 function TextEntry({ send, onClose }: { send: Props['send']; onClose: () => void }) {
@@ -44,7 +49,7 @@ function TextEntry({ send, onClose }: { send: Props['send']; onClose: () => void
 
   return (
     <form className="text-entry" onSubmit={submit}>
-      <div className="text-entry-row">
+      <div className="text-entry-field">
         <input
           ref={input}
           value={value}
@@ -55,16 +60,23 @@ function TextEntry({ send, onClose }: { send: Props['send']; onClose: () => void
           enterKeyHint="go"
         />
         {voice.supported && (
-          <button type="button" className={voice.listening ? 'round-button listening' : 'round-button'} aria-label="Voice" onClick={voice.toggle}>
-            <Icon name="mic" />
+          <button type="button" className="text-entry-icon" data-listening={voice.listening || undefined} aria-label="Voice" onClick={voice.toggle}>
+            <Icon name="mic" size={20} />
           </button>
         )}
+        <button type="submit" className="text-entry-go" aria-label="Go">
+          <Icon name="send" size={20} />
+        </button>
       </div>
-      <div className="text-entry-keys">
-        <button type="button" className="chip" disabled={!text} onClick={() => type(false)}>Type</button>
-        <button type="button" className="chip" onClick={() => send({ type: 'key', key: 'delete' })}>Delete</button>
-        <button type="submit" className="chip chip-accent">Go</button>
-        <button type="button" className="chip" onClick={onClose}>Done</button>
+      <div className="text-entry-actions">
+        <button type="button" onClick={onClose}>
+          <Icon name="close" size={16} />Close
+        </button>
+        <span className="text-entry-spacer" />
+        <button type="button" onClick={() => send({ type: 'key', key: 'delete' })}>
+          <Icon name="erase" size={16} />Delete
+        </button>
+        <button type="button" disabled={!text} onClick={() => type(false)}>Type only</button>
       </div>
     </form>
   )

@@ -596,44 +596,108 @@
 
 /* ── Text entry ── */
 
+/* One field with its actions inside it; the rarer actions sit quietly underneath. */
 .text-entry {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px;
-  border-radius: var(--radius);
-  background: var(--surface);
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
   animation: rise 0.18s ease-out;
   flex: none;
+}
+
+.text-entry-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  padding: 0 4px 0 16px;
+  border-radius: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.text-entry-field:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
 }
 
 .text-entry input {
   flex: 1;
   min-width: 0;
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
   color: var(--text);
   font: inherit;
-  font-size: 16px;
+  font-size: 16px; /* below 16px iOS zooms the page when the field is focused */
   outline: none;
 }
 
-.text-entry input:focus {
-  border-color: var(--accent);
-}
-
-.text-entry-keys {
-  flex-basis: 100%;
+.text-entry-icon,
+.text-entry-go {
+  flex: none;
+  width: 40px;
+  height: 40px;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
-.text-entry-keys .chip:last-child {
-  margin-left: auto;
+.text-entry-icon {
+  color: var(--text-muted);
+}
+
+.text-entry-icon[data-listening] {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.text-entry-go {
+  background: var(--accent);
+  color: #fff;
+}
+
+.text-entry-go:active {
+  transform: scale(0.94);
+}
+
+.text-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.text-entry-actions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.text-entry-actions button:active {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.text-entry-actions button:disabled {
+  opacity: 0.35;
+}
+
+.text-entry-spacer {
+  flex: 1;
 }
 
 /* ── Sheets, toasts ── */

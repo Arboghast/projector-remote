@@ -1,5 +1,6 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, type PointerEvent, type ReactNode } from 'react'
 import type { RemoteCommand } from '../relay'
+import { toWall, useWallFit, wallStageStyle } from '../shared/wallFit'
 
 type Props = {
   send: (command: RemoteCommand) => void
@@ -18,8 +19,14 @@ export type InkHandle = { clear: () => void; undo: () => void }
 type Point = [number, number]
 type Stroke = { id: string; color: string; size: number; points: Point[] }
 
-const WALL_ASPECT = 16 / 9
 const FLUSH_MS = 16
+// The wall is ~5x the phone, so touchscreen jitter shows as jagged ink. Each sample is eased toward
+// the finger, and samples closer together than MIN_STEP (fractions of the wall) are skipped.
+const SMOOTHING = 0.4
+const MIN_STEP = 0.0015
+
+const round = (v: number) => Math.round(v * 10000) / 10000
+const distance = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[1] - b[1])
 
 /**
  * The wall as large as the screen allows. On a portrait phone the wall is turned on its side
@@ -31,28 +38,12 @@ export const InkSurface = forwardRef<InkHandle, Props>(function InkSurface({ sen
   const stage = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const strokes = useRef<Stroke[]>([])
-  const active = useRef<{ pointer: number; stroke: Stroke } | null>(null)
+  const active = useRef<{ pointer: number; stroke: Stroke; raw?: Point } | null>(null)
   const pending = useRef<Point[]>([])
   const timer = useRef<number | undefined>(undefined)
   // The stage's box, measured once per stroke rather than for every sample (each read forces layout).
   const box = useRef<DOMRect | null>(null)
-  const [layout, setLayout] = useState({ long: 0, short: 0, rotated: false })
-
-  useEffect(() => {
-    const fit = () => {
-      const box = wrap.current?.getBoundingClientRect()
-      if (!box) return
-      const rotated = box.height > box.width
-      const along = rotated ? box.height : box.width
-      const across = rotated ? box.width : box.height
-      const long = Math.min(along, across * WALL_ASPECT)
-      setLayout({ long, short: long / WALL_ASPECT, rotated })
-    }
-    fit()
-    const ro = new ResizeObserver(fit)
-    if (wrap.current) ro.observe(wrap.current)
-    return () => ro.disconnect()
-  }, [])
+  const layout = useWallFit(wrap)
 
   const pen = () => {
     const c = canvas.current
@@ -141,28 +132,38 @@ export const InkSurface = forwardRef<InkHandle, Props>(function InkSurface({ sen
   }
 
   /** Screen position → fraction of the wall, undoing the sideways turn in portrait. */
-  const toWall = (x: number, y: number): Point => {
+  const wallPoint = (x: number, y: number): Point => {
     const r = box.current
     if (!r) return [0, 0]
-    const clamp = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 10000) / 10000
-    return layout.rotated
-      ? [clamp((y - r.top) / r.height), clamp((r.right - x) / r.width)]
-      : [clamp((x - r.left) / r.width), clamp((y - r.top) / r.height)]
+    const clamp = (v: number) => round(Math.min(1, Math.max(0, v)))
+    const [wx, wy] = toWall(r, x, y, layout.rotated)
+    return [clamp(wx), clamp(wy)]
+  }
+
+  const push = (s: Stroke, pt: Point) => {
+    s.points.push(pt)
+    pending.current.push(pt)
+    // Draw just the new piece: redrawing every stroke on each move is what made long drawings lag.
+    const p = pen()
+    if (p) drawPiece(p.g, p.c, s, s.points.length - 1)
+    if (timer.current === undefined) timer.current = window.setTimeout(flush, FLUSH_MS)
   }
 
   const add = (e: PointerEvent<HTMLDivElement>) => {
     const a = active.current
     if (!a) return
     const events = e.nativeEvent.getCoalescedEvents?.() ?? []
-    const p = pen()
     for (const ev of events.length ? events : [e.nativeEvent]) {
-      const pt = toWall(ev.clientX, ev.clientY)
-      a.stroke.points.push(pt)
-      pending.current.push(pt)
-      // Draw just the new piece: redrawing every stroke on each move is what made long drawings lag.
-      if (p) drawPiece(p.g, p.c, a.stroke, a.stroke.points.length - 1)
+      const raw = wallPoint(ev.clientX, ev.clientY)
+      a.raw = raw
+      const last = a.stroke.points.at(-1)
+      if (!last) {
+        push(a.stroke, raw)
+        continue
+      }
+      const eased: Point = [round(last[0] + (raw[0] - last[0]) * SMOOTHING), round(last[1] + (raw[1] - last[1]) * SMOOTHING)]
+      if (distance(eased, last) >= MIN_STEP) push(a.stroke, eased)
     }
-    if (timer.current === undefined) timer.current = window.setTimeout(flush, FLUSH_MS)
   }
 
   const down = (e: PointerEvent<HTMLDivElement>) => {
@@ -185,7 +186,11 @@ export const InkSurface = forwardRef<InkHandle, Props>(function InkSurface({ sen
   }
 
   const up = (e: PointerEvent<HTMLDivElement>) => {
-    if (active.current?.pointer !== e.pointerId) return
+    const a = active.current
+    if (a?.pointer !== e.pointerId) return
+    // Smoothing trails the finger slightly; finish exactly where it lifted.
+    const last = a.stroke.points.at(-1)
+    if (a.raw && last && distance(a.raw, last) >= MIN_STEP / 2) push(a.stroke, a.raw)
     window.clearTimeout(timer.current)
     flush()
     const p = pen()
@@ -194,15 +199,9 @@ export const InkSurface = forwardRef<InkHandle, Props>(function InkSurface({ sen
     onStrokeEnd?.()
   }
 
-  const stageStyle = {
-    width: layout.long,
-    height: layout.short,
-    transform: `translate(-50%, -50%)${layout.rotated ? ' rotate(90deg)' : ''}`,
-  }
-
   return (
     <div className="ink-wrap" ref={wrap} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
-      <div className="ink-stage" ref={stage} style={stageStyle}>
+      <div className="ink-stage" ref={stage} style={wallStageStyle(layout)}>
         {backdrop && <div className="ink-backdrop">{backdrop}</div>}
         <canvas ref={canvas} className="ink-canvas" />
       </div>

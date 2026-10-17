@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import type { RemoteCommand } from '../relay'
-import { scrollCommand } from '../shared/scroll'
+import { useScroll } from '../shared/scroll'
 import { useFrameBatch, usePad } from './usePad'
 
 /**
@@ -13,7 +13,7 @@ export function useCursorPad(send: (command: RemoteCommand) => void, haptics = f
   const buzz = (ms: number) => {
     if (haptics) navigator.vibrate?.(ms)
   }
-  const scroll = useFrameBatch((dx, dy) => send(scrollCommand(dx, dy)))
+  const scroll = useScroll(send)
   const move = useFrameBatch((dx, dy) => {
     const gain = 1.4 + Math.min(speed.current * 2.2, 4)
     send({ type: 'pointer', dx: Math.round(dx * gain), dy: Math.round(dy * gain) })

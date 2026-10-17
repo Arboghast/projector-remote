@@ -112,8 +112,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  max-width: 440px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   border-bottom: none;
@@ -277,8 +275,15 @@
   background: color-mix(in srgb, var(--app) 30%, var(--surface));
 }
 
+/* The sheet spans the screen; its rows stay a thumb's width apart on the unfolded Fold. */
+.sheet-glance,
+.sheet-full > :not(.wheel) {
+  width: 100%;
+  max-width: 440px;
+  margin-inline: auto;
+}
+
 .sheet-keys {
-  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: space-between;

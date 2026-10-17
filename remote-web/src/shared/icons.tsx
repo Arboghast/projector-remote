@@ -20,11 +20,14 @@ const paths = {
   link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
   shelf: 'M4 7h16M4 12h16M4 17h10',
   pen: 'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3',
+  erase: 'M21 5H9l-6 7 6 7h12zM12 9l6 6M18 9l-6 6',
 } as const
 
 export type IconName = keyof typeof paths
 
-export function Icon({ name, size }: { name: IconName; size?: number }) {
+// Always sized: Safari collapses an svg with only a viewBox to nothing inside a flex button.
+// A CSS width/height on the svg still overrides these attributes.
+export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" width={size} height={size}>
       <path d={paths[name]} />

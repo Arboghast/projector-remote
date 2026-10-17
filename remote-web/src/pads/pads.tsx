@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import type { RemoteCommand } from '../relay'
-import { scrollCommand } from '../shared/scroll'
+import { useScroll } from '../shared/scroll'
 import { useCursorPad } from './useCursorPad'
-import { useFrameBatch, usePad } from './usePad'
+import { usePad } from './usePad'
 import './pads.css'
 
 type PadProps = { send: (command: RemoteCommand) => void }
@@ -11,7 +11,7 @@ type PadProps = { send: (command: RemoteCommand) => void }
 
 /** The page follows the finger as one continuous drag; tap is OK. */
 export function ScrollPad({ send }: PadProps) {
-  const scroll = useFrameBatch((dx, dy) => send(scrollCommand(dx, dy)))
+  const scroll = useScroll(send)
   const pad = usePad({
     onMove: (dx, dy) => scroll(dx, dy),
     onTap: () => send({ type: 'key', key: 'ok' }),

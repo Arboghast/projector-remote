@@ -2,27 +2,24 @@
   max-width: 1100px;
 }
 
-/* All of it takes touches; the picture sits in the middle as large as it fits. */
+/* All of it takes touches; the wall sits in the middle as large as it fits, never cropped. */
 .lens-surface {
+  position: relative;
   flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
   border-radius: var(--radius);
   background: var(--surface);
   touch-action: none;
   overflow: hidden;
 }
 
-.lens-surface .screen-preview {
-  border-radius: 10px;
+.lens-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
 }
 
-.lens-hint {
-  margin: 0;
-  font-size: 13px;
-  pointer-events: none;
+.lens-stage .screen-preview {
+  height: 100%;
+  border-radius: 10px;
 }

@@ -6,6 +6,7 @@ type Props = {
   send: (command: RemoteCommand) => void
   active: boolean
   surface?: RefObject<HTMLElement | null>
+  rotated?: boolean
 }
 
 // A frame costs the projector ~2 s of capture, so the preview refreshes as fast as frames arrive
@@ -14,7 +15,7 @@ const PAUSE_BETWEEN_MS = 300
 const RETRY_MS = 3000
 
 /** A live-ish picture of the wall (the fallback when video can't play): tap presses, drag scrolls. */
-export function ScreenPreview({ send, active, surface }: Props) {
+export function ScreenPreview({ send, active, surface, rotated = false }: Props) {
   const frame = useRef<HTMLDivElement>(null)
   const [src, setSrc] = useState<string | null>(null)
   const [stale, setStale] = useState(false)
@@ -58,7 +59,7 @@ export function ScreenPreview({ send, active, surface }: Props) {
     if (current.current) URL.revokeObjectURL(current.current)
   }, [])
 
-  const ripple = useWallTouch(send, surface ?? frame, frame)
+  const ripple = useWallTouch(send, surface ?? frame, frame, true, rotated)
 
   return (
     <div ref={frame} className="screen-preview" data-wall-picture data-stale={stale} role="application" aria-label="The wall: tap to press, drag to scroll">

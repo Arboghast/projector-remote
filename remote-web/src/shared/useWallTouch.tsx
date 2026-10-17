@@ -1,6 +1,6 @@
 import { useState, type RefObject } from 'react'
 import type { RemoteCommand } from '../relay'
-import { scrollCommand } from './scroll'
+import { useScroll } from './scroll'
 import { useTouchSurface } from './useTouchSurface'
 
 type Ripple = { x: number; y: number; at: number }
@@ -16,8 +16,10 @@ export function useWallTouch(
   surface: RefObject<HTMLElement | null>,
   picture: RefObject<HTMLElement | null>,
   enabled = true,
+  rotated = false,
 ) {
   const [ripple, setRipple] = useState<Ripple | null>(null)
+  const scroll = useScroll(send)
 
   useTouchSurface(surface, picture, {
     onTap: (x, y) => {
@@ -27,8 +29,8 @@ export function useWallTouch(
       window.setTimeout(() => setRipple((cur) => (cur?.at === r.at ? null : cur)), RIPPLE_MS)
     },
     // You're touching the picture itself, so the page follows your finger (unlike the trackpads).
-    onDrag: (dx, dy) => send(scrollCommand(-dx, -dy)),
-  }, enabled)
+    onDrag: (dx, dy) => scroll(-dx, -dy),
+  }, enabled, rotated)
 
   return ripple && <span key={ripple.at} className="screen-ripple" style={{ left: `${ripple.x}%`, top: `${ripple.y}%` }} />
 }

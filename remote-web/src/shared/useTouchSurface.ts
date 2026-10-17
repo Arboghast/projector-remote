@@ -1,5 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { useFrameBatch } from '../pads/usePad'
+import { alongWall, toWall } from './wallFit'
 
 type Handlers = {
   /** A tap on the picture, as fractions of the picture's box. */
@@ -17,7 +18,7 @@ const TAP_MS = 400
  * picture's own box and taps beside it do nothing. Native listeners, since the surface may belong
  * to a parent component.
  */
-export function useTouchSurface(surface: RefObject<HTMLElement | null>, picture: RefObject<HTMLElement | null>, handlers: Handlers, enabled = true) {
+export function useTouchSurface(surface: RefObject<HTMLElement | null>, picture: RefObject<HTMLElement | null>, handlers: Handlers, enabled = true, rotated = false) {
   const h = useRef(handlers)
   h.current = handlers
   const drag = useFrameBatch((dx, dy) => h.current.onDrag(dx, dy))
@@ -45,7 +46,7 @@ export function useTouchSurface(surface: RefObject<HTMLElement | null>, picture:
     const move = (e: PointerEvent) => {
       if (!start || e.pointerId !== start.id) return
       if (!dragging && Math.hypot(e.clientX - start.x, e.clientY - start.y) > SLOP_PX) dragging = true
-      if (dragging) dragRef.current(e.clientX - last.x, e.clientY - last.y)
+      if (dragging) dragRef.current(...alongWall(e.clientX - last.x, e.clientY - last.y, rotated))
       last = { x: e.clientX, y: e.clientY }
     }
     const up = (e: PointerEvent) => {
@@ -55,8 +56,7 @@ export function useTouchSurface(surface: RefObject<HTMLElement | null>, picture:
       if (dragging || !quick) return
       const box = picture.current?.getBoundingClientRect()
       if (!box) return
-      const x = (e.clientX - box.left) / box.width
-      const y = (e.clientY - box.top) / box.height
+      const [x, y] = toWall(box, e.clientX, e.clientY, rotated)
       if (x >= 0 && x <= 1 && y >= 0 && y <= 1) h.current.onTap(x, y)
     }
     const cancel = () => {
@@ -73,5 +73,5 @@ export function useTouchSurface(surface: RefObject<HTMLElement | null>, picture:
       el.removeEventListener('pointerup', up)
       el.removeEventListener('pointercancel', cancel)
     }
-  }, [surface, picture, enabled])
+  }, [surface, picture, enabled, rotated])
 }

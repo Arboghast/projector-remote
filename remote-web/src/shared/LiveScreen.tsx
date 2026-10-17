@@ -10,19 +10,21 @@ type Props = {
   active: boolean
   /** A larger element to take touches from (the picture still decides where a tap lands). */
   surface?: RefObject<HTMLElement | null>
+  /** The picture is shown turned on its side, so touches are turned back. */
+  rotated?: boolean
 }
 
 /**
  * The wall as live video (~0.1–0.2 s behind), straightened for the projector's keystone. Falls back
  * to the snapshot preview when the browser can't decode it.
  */
-export function LiveScreen({ send, active, surface }: Props) {
+export function LiveScreen({ send, active, surface, rotated = false }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const frame = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const { failed, quad } = useH264Stream(canvas, active)
   // The snapshot fallback takes over the touch surface when video can't play.
-  const ripple = useWallTouch(send, surface ?? frame, frame, !failed)
+  const ripple = useWallTouch(send, surface ?? frame, frame, !failed, rotated)
 
   useEffect(() => {
     const el = frame.current
@@ -32,7 +34,7 @@ export function LiveScreen({ send, active, surface }: Props) {
     return () => observer.disconnect()
   }, [failed])
 
-  if (failed) return <ScreenPreview send={send} active={active} surface={surface} />
+  if (failed) return <ScreenPreview send={send} active={active} surface={surface} rotated={rotated} />
 
   return (
     <div ref={frame} className="screen-preview" data-wall-picture role="application" aria-label="The wall: tap to press, drag to scroll">
