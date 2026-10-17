@@ -20,14 +20,13 @@ function recognitionCtor(): RecognitionCtor | undefined {
 }
 
 /** Why dictation stopped, in words; null when there's nothing to say (you stopped it, or it worked). */
-export function voiceProblem(error: string, secure: boolean): string | null {
+function voiceProblem(error: string): string | null {
   switch (error) {
     case 'aborted':
       return null
     case 'not-allowed':
     case 'service-not-allowed':
-      // Phones only allow the microphone on https pages, and the Wi-Fi address is plain http.
-      return secure ? 'Microphone blocked: allow it for this site' : "Voice needs the Tailscale address; try your keyboard's mic"
+      return 'Microphone blocked: allow it for this site'
     case 'no-speech':
       return "Didn't hear anything, tap the mic and speak"
     case 'audio-capture':
@@ -41,7 +40,9 @@ export function voiceProblem(error: string, secure: boolean): string | null {
 
 /** Dictation on the phone itself; the projector only ever receives the finished text. */
 export function useVoice(onText: (text: string) => void) {
-  const supported = recognitionCtor() !== undefined
+  // Phones only allow the microphone on https pages; on the plain-http Wi-Fi address the button would never
+  // work, so it isn't offered (the keyboard's own mic still is).
+  const supported = window.isSecureContext && recognitionCtor() !== undefined
   const active = useRef<Recognition | null>(null)
   const [listening, setListening] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
@@ -70,7 +71,7 @@ export function useVoice(onText: (text: string) => void) {
       const transcript = Array.from(e.results).map((r) => r[0]?.transcript ?? '').join(' ').trim()
       if (transcript) onTextRef.current(transcript)
     }
-    rec.onerror = (e) => setProblem(voiceProblem(e.error, window.isSecureContext))
+    rec.onerror = (e) => setProblem(voiceProblem(e.error))
     rec.onend = () => {
       active.current = null
       setListening(false)
@@ -83,7 +84,7 @@ export function useVoice(onText: (text: string) => void) {
     } catch {
       active.current = null
       setListening(false)
-      setProblem(voiceProblem('not-allowed', window.isSecureContext))
+      setProblem(voiceProblem('not-allowed'))
     }
   }, [])
 
