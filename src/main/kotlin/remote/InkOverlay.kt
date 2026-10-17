@@ -62,6 +62,9 @@ class InkOverlay(private val shell: AdbShell, private val apk: File) {
         if (installed == null || installed < VERSION) {
             log.info("installing the drawing overlay v$VERSION (projector has ${installed ?: "none"})")
             shell.install(apk)
+            // Android restarts a just-updated app's process shortly after install, which drops the
+            // first connection (and the first strokes with it) unless the service starts after that.
+            delay(AFTER_INSTALL_MS)
         }
         shell.send("appops set $PACKAGE SYSTEM_ALERT_WINDOW allow; am start-foreground-service -n $PACKAGE/.InkService")
         shell.forward(LOCAL_PORT, DEVICE_PORT)
@@ -107,6 +110,7 @@ class InkOverlay(private val shell: AdbShell, private val apk: File) {
         private const val LOCAL_PORT = 14790
         private const val START_ATTEMPTS = 10
         private const val START_POLL_MS = 300L
+        private const val AFTER_INSTALL_MS = 2500L
         private const val CONNECT_TIMEOUT_MS = 2000
         private const val ON = """{"type":"overlay-on"}"""
         private const val OFF = """{"type":"overlay-off"}"""
