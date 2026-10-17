@@ -112,13 +112,14 @@ public final class InkService extends Service {
                     String id = m.getString("id");
                     String color = m.optString("color", "#f5a524");
                     float size = (float) m.optDouble("size", 0.006);
+                    String tool = m.optString("tool", "pen");
                     JSONArray pts = m.getJSONArray("points");
                     List<float[]> points = new ArrayList<>(pts.length());
                     for (int i = 0; i < pts.length(); i++) {
                         JSONArray p = pts.getJSONArray(i);
                         points.add(new float[]{(float) p.getDouble(0), (float) p.getDouble(1)});
                     }
-                    main.post(() -> ink.add(id, color, size, points));
+                    main.post(() -> ink.add(id, color, size, tool, points));
                     break;
                 }
                 default: break;

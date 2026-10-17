@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { parseRelayEvent, type ProjectorState, type RemoteCommand, type ShelfItem } from './protocol'
 
-export type { MediaAction, NowPlaying, ProjectorState, RemoteCommand, RemoteKey, ShelfItem } from './protocol'
+export type { InkTool, MediaAction, NowPlaying, ProjectorState, RemoteCommand, RemoteKey, ShelfItem } from './protocol'
 
 /** relay = phone ↔ PC socket; projector = PC ↔ projector adb link. */
 export type Link = 'connecting' | 'relay-down' | 'projector-off' | 'ready'

@@ -21,6 +21,10 @@ const paths = {
   shelf: 'M4 7h16M4 12h16M4 17h10',
   pen: 'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3',
   erase: 'M21 5H9l-6 7 6 7h12zM12 9l6 6M18 9l-6 6',
+  eraser: 'M8 20h12M4.5 15.5l9-9a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 19H8z',
+  arrow: 'M5 19L19 5M10 5h9v9',
+  rect: 'M4 6h16v12H4z',
+  ellipse: 'M12 5c4.4 0 8 3.1 8 7s-3.6 7-8 7-8-3.1-8-7 3.6-7 8-7z',
 } as const
 
 export type IconName = keyof typeof paths

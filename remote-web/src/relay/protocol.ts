@@ -6,6 +6,8 @@ export type RemoteKey =
   | 'playpause' | 'volup' | 'voldown' | 'mute'
   | 'enter' | 'delete' | 'captions'
 
+export type InkTool = 'pen' | 'erase' | 'arrow' | 'rect' | 'ellipse'
+
 export type MediaAction = 'play-pause' | 'next' | 'previous' | 'rewind' | 'fast-forward'
 
 export type RemoteCommand =
@@ -23,7 +25,7 @@ export type RemoteCommand =
   | { type: 'draw' }
   | { type: 'draw-end' }
   | { type: 'player-settings' }
-  | { type: 'ink'; id: string; points: [number, number][]; color: string; size: number }
+  | { type: 'ink'; id: string; points: [number, number][]; color: string; size: number; tool: InkTool }
   | { type: 'ink-clear' }
   | { type: 'ink-undo' }
 

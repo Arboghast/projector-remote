@@ -58,9 +58,9 @@ class InkOverlay(private val shell: AdbShell, private val apk: File) {
 
     private suspend fun connect(): Writer {
         if (!shell.connected.value) throw ProjectorUnavailable("projector offline")
-        val installed = shell.exec("pm list packages $PACKAGE").decodeToString().contains(PACKAGE)
-        if (!installed) {
-            log.info("installing the drawing overlay")
+        val installed = installedVersion(shell.exec("pm list packages --show-versioncode $PACKAGE").decodeToString())
+        if (installed == null || installed < VERSION) {
+            log.info("installing the drawing overlay v$VERSION (projector has ${installed ?: "none"})")
             shell.install(apk)
         }
         shell.send("appops set $PACKAGE SYSTEM_ALERT_WINDOW allow; am start-foreground-service -n $PACKAGE/.InkService")
@@ -94,15 +94,22 @@ class InkOverlay(private val shell: AdbShell, private val apk: File) {
         writer = null
     }
 
-    private companion object {
-        const val PACKAGE = "com.projectorremote.ink"
-        const val DEVICE_PORT = 4790
-        const val LOCAL_PORT = 14790
-        const val START_ATTEMPTS = 10
-        const val START_POLL_MS = 300L
-        const val CONNECT_TIMEOUT_MS = 2000
-        const val ON = """{"type":"overlay-on"}"""
-        const val OFF = """{"type":"overlay-off"}"""
-        const val CLEAR = """{"type":"ink-clear"}"""
+    companion object {
+        /** versionCode in overlay-app/AndroidManifest.xml; raise both together so projectors update. */
+        const val VERSION = 2
+
+        /** The versionCode from `pm list packages --show-versioncode`, or null when it isn't installed. */
+        fun installedVersion(listing: String): Int? =
+            Regex("""package:${Regex.escape(PACKAGE)} versionCode:(\d+)""").find(listing)?.groupValues?.get(1)?.toIntOrNull()
+
+        private const val PACKAGE = "com.projectorremote.ink"
+        private const val DEVICE_PORT = 4790
+        private const val LOCAL_PORT = 14790
+        private const val START_ATTEMPTS = 10
+        private const val START_POLL_MS = 300L
+        private const val CONNECT_TIMEOUT_MS = 2000
+        private const val ON = """{"type":"overlay-on"}"""
+        private const val OFF = """{"type":"overlay-off"}"""
+        private const val CLEAR = """{"type":"ink-clear"}"""
     }
 }

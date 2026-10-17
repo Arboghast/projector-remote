@@ -99,7 +99,7 @@ sealed interface RelayCommand : RemoteCommand {
 
     /** Part of a stroke: points are fractions of the wall (0–1); the same id continues a stroke. */
     @Serializable @SerialName("ink")
-    data class Ink(val id: String, val points: List<List<Double>>, val color: String, val size: Double) : RelayCommand
+    data class Ink(val id: String, val points: List<List<Double>>, val color: String, val size: Double, val tool: String = "pen") : RelayCommand
 
     /** Leaves drawing: hides the live overlay. */
     @Serializable @SerialName("draw-end")

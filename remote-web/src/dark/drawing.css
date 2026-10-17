@@ -61,12 +61,59 @@
   box-shadow: 0 0 0 2px var(--ink);
 }
 
-.ink-bar {
+.ink-controls {
   position: absolute;
   z-index: 2;
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom) + 14px);
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+/* Out of the way while a stroke is being drawn under it. */
+.ink-controls[data-faded] {
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.ink-tools {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  animation: rise 0.15s ease-out;
+}
+
+.ink-tools .icon-button[aria-pressed='true'],
+.ink-tool {
+  color: var(--ink);
+}
+
+.ink-tools .icon-button[aria-pressed='true'] {
+  background: var(--surface-raised);
+}
+
+.ink-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.2s;
+}
+
+/* The eraser has no colour; the dots stay tappable to switch back to drawing. */
+.ink-dots[data-idle] {
+  opacity: 0.35;
+}
+
+.ink-bar {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -76,13 +123,6 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border);
-  transition: opacity 0.2s;
-}
-
-/* Out of the way while a stroke is being drawn under it. */
-.ink-bar[data-faded] {
-  opacity: 0.12;
-  pointer-events: none;
 }
 
 .ink-done {
