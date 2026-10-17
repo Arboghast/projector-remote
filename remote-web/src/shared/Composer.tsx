@@ -116,7 +116,7 @@ export function Composer({ send, newestUrl, suggestionsAbove }: Props) {
           <input
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={shown ? 'Showing on the wall' : saved ? 'Saved to the Shelf' : 'Search or paste a link'}
+            placeholder={voice.problem ?? (shown ? 'Showing on the wall' : saved ? 'Saved to the Shelf' : 'Search or paste a link')}
             autoCapitalize="off"
             autoCorrect="off"
             enterKeyHint="done"

@@ -54,7 +54,7 @@ function TextEntry({ send, onClose }: { send: Props['send']; onClose: () => void
           ref={input}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Type into the wall"
+          placeholder={voice.problem ?? 'Type into the wall'}
           autoCapitalize="off"
           autoCorrect="off"
           enterKeyHint="go"
