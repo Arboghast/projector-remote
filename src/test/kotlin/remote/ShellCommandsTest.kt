@@ -62,6 +62,28 @@ class ShellCommandsTest {
     }
 
     @Test
+    fun `twitch links become the TV app's own links`() {
+        fun data(url: String) = withBrowser.lineFor(ProjectorCommand.Open(url)).substringAfter("-d '").substringBefore("'")
+        assertEquals("twitch://stream/somechannel", data("https://m.twitch.tv/somechannel?sr=a"))
+        assertEquals("twitch://stream/somechannel", data("https://www.twitch.tv/somechannel/about"))
+        assertEquals("twitch://video/123456", data("https://www.twitch.tv/videos/123456"))
+        assertEquals("twitch://clip/FunnyClip-abc", data("https://www.twitch.tv/somechannel/clip/FunnyClip-abc"))
+        assertEquals("twitch://clip/FunnyClip-abc", data("https://clips.twitch.tv/FunnyClip-abc"))
+        assertEquals("twitch://home", data("https://www.twitch.tv/directory/category/chess"))
+    }
+
+    @Test
+    fun `a link no app takes falls back to the browser`() {
+        val reply = "Starting: Intent { ... }\nError: Activity not started, unable to resolve Intent { act=... }\n"
+        val failure = amStartFailure(reply)
+        assertEquals("Activity not started, unable to resolve Intent { act=... }", failure)
+        assertEquals(true, failure?.let(::isUnresolved))
+        assertEquals(null, amStartFailure("Starting: Intent { ... }\nWarning: Activity not started, intent has been delivered to currently running top-most instance."))
+        assertEquals(true, withBrowser.openInBrowser("https://open.spotify.com/track/x")?.contains("-p 'com.phlox.tvwebbrowser'"))
+        assertEquals(null, withBrowser.openInBrowser("https://example.com"))
+    }
+
+    @Test
     fun `open rejects non-web links`() {
         assertFailsWith<InvalidCommand> { commands.lineFor(ProjectorCommand.Open("file:///sdcard/x")) }
         assertFailsWith<InvalidCommand> { commands.lineFor(ProjectorCommand.Open("javascript:alert(1)")) }

@@ -41,15 +41,34 @@ class ShellCommands(private val browser: String?) {
         return "input tap ${(x * (SCREEN_W - 1)).toInt()} ${(y * (SCREEN_H - 1)).toInt()}"
     }
 
-    private fun open(url: String): String {
+    /** Opens the link in the browser (or Android's choice): the fallback when the link's own app can't take it. */
+    fun openInBrowser(url: String): String? = if (appFor(url) == browser) null else open(url, browser)
+
+    private fun open(url: String, app: String? = appFor(url)): String {
         val uri = webUri(url)
-        val app = appFor(url)
         val target = app?.let { " -p ${quote(it)}" } ?: ""
         // TV Bro opens every incoming link in a new tab, building a WebView each time; on this
         // projector that eventually fails with "Can not link to WebView component" and tabs pile up.
         // Its own extra reuses the current tab instead.
         val sameTab = if (app == Packages.TV_BRO) " --ez com.phlox.tvwebbrowser.EXTRA_OPEN_IN_SAME_TAB true" else ""
-        return "am start -a android.intent.action.VIEW -d ${quote(uri.toString())}$target$sameTab"
+        val data = if (app == Packages.TWITCH) twitchLink(uri) else uri.toString()
+        return "am start -a android.intent.action.VIEW -d ${quote(data)}$target$sameTab"
+    }
+
+    /**
+     * The Twitch TV app ignores https://twitch.tv links (it has no handler, so `am start` quietly
+     * fails); it only takes its own twitch://stream|video|clip/<id> links.
+     */
+    private fun twitchLink(uri: URI): String {
+        val parts = uri.path.orEmpty().split('/').filter { it.isNotEmpty() }
+        val first = parts.firstOrNull()
+        return when {
+            uri.host.lowercase() == "clips.twitch.tv" && first != null -> "twitch://clip/$first"
+            first == "videos" && parts.size > 1 -> "twitch://video/${parts[1]}"
+            parts.size > 2 && parts[1] == "clip" -> "twitch://clip/${parts[2]}"
+            first != null && first !in TWITCH_PAGES -> "twitch://stream/$first"
+            else -> "twitch://home"
+        }
     }
 
     private fun webUri(url: String): URI =
@@ -68,12 +87,22 @@ class ShellCommands(private val browser: String?) {
         val APPS = mapOf(
             setOf("youtube.com", "youtu.be", "music.youtube.com") to Packages.YOUTUBE,
             setOf("open.spotify.com") to Packages.SPOTIFY,
-            setOf("twitch.tv") to Packages.TWITCH,
+            setOf("twitch.tv", "clips.twitch.tv") to Packages.TWITCH,
         )
+
+        /** twitch.tv paths that are site pages, not channel names. */
+        val TWITCH_PAGES = setOf("directory", "search", "settings", "videos", "downloads", "p", "jobs", "turbo")
 
         fun quote(value: String) = "'" + value.replace("'", "'\\''") + "'"
     }
 }
+
+/** `am start` exits 0 even when nothing opened; its "Error:" line is the only sign. */
+fun amStartFailure(reply: String): String? =
+    reply.lineSequence().firstOrNull { it.startsWith("Error") }?.removePrefix("Error:")?.trim()
+
+/** No app on the projector takes this link (as opposed to the app refusing to start). */
+fun isUnresolved(failure: String) = "unable to resolve" in failure
 
 private val urlPattern = Regex("""https?://[^\s<>"']+""")
 

@@ -24,7 +24,9 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
@@ -83,7 +85,7 @@ class Relay(
             focus.steps(command.dx, command.dy, System.currentTimeMillis()).forEach { sender.press(it) }
         command is ProjectorCommand.Open -> {
             quirks.beforeOpening(runCatching { commands.appFor(command.url) }.getOrNull())
-            sender.deliver(command)
+            open(command)
             projector.opened(command.url)
         }
         else -> sender.deliver(command)
@@ -101,6 +103,18 @@ class Relay(
         if (action == MediaAction.Rewind || action == MediaAction.FastForward) quirks.afterSeek(playing.app)
     }
 
+    /** Runs `am start` and reads its reply, so a link nothing opened is reported instead of silently lost. */
+    private suspend fun open(command: ProjectorCommand.Open) {
+        val failure = startFailure(command.url, commands.lineFor(command)) ?: return
+        val fallback = commands.openInBrowser(command.url)
+        if (!isUnresolved(failure) || fallback == null) throw InvalidCommand("couldn't open the link: $failure")
+        log.info("no app took {}; opening it in the browser", command.url)
+        startFailure(command.url, fallback)?.let { throw InvalidCommand("couldn't open the link: $it") }
+    }
+
+    private suspend fun startFailure(url: String, line: String): String? =
+        amStartFailure(shell.exec(line).decodeToString())?.also { log.warn("opening {} failed: {}", url, it) }
+
     private fun cursor(ok: Boolean) {
         if (!ok) throw ProjectorUnavailable("the cursor isn't available right now")
     }
@@ -111,6 +125,8 @@ class Relay(
     }
 
     private suspend fun project(id: String) {
+        // Taking and re-adding would give the link a new id and move it to the top of the shelf.
+        if (!shell.connected.value) throw ProjectorUnavailable("the projector is offline")
         val item = shelf.take(id) ?: throw InvalidCommand("that link is no longer on the shelf")
         execute(ProjectorCommand.Open(item.url))?.let { error ->
             shelf.add(item.url, item.app, item.from) // put it back so nothing is lost
@@ -157,6 +173,8 @@ class Relay(
             }
         } finally {
             remotes -= this
+            // A phone that closed mid-drawing never sends draw-end; the overlay would hold ~90 MB.
+            if (remotes.isEmpty()) withContext(NonCancellable) { overlay.stop() }
         }
     }
 
