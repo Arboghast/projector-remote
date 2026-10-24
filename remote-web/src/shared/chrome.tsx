@@ -1,5 +1,6 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import type { Link } from '../relay'
+import { AskButton } from './Claude'
 import { Icon } from './icons'
 
 const LINK_LABEL: Record<Link, string> = {
@@ -82,7 +83,10 @@ export function CornerBar({ link, openLayouts }: { link: Link; openLayouts: () =
   return (
     <header className="corner-bar">
       <LayoutButton onClick={openLayouts} />
-      <LinkDot link={link} />
+      <span className="corner-end">
+        <AskButton />
+        <LinkDot link={link} />
+      </span>
     </header>
   )
 }
@@ -92,6 +96,7 @@ export function TopBar({ link, openLayouts, children }: { link: Link; openLayout
   return (
     <header className="topbar">
       <span className="topbar-title">{children}</span>
+      <AskButton />
       <LinkDot link={link} />
       <LayoutButton onClick={openLayouts} />
     </header>

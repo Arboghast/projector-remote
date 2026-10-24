@@ -1,6 +1,7 @@
 import { useState, type ComponentType } from 'react'
 import { useRelay, type Relay } from '../relay'
 import { Sheet, Toast, useWakeLock } from '../shared/chrome'
+import { ClaudeProgress, ClaudeProvider } from '../shared/Claude'
 import { Icon, type IconName } from '../shared/icons'
 import { Classic } from '../classic'
 import { Lens } from '../lens'
@@ -59,9 +60,12 @@ export function App() {
   const Layout = LAYOUTS.find((l) => l.id === layoutId)?.component ?? Theatre
 
   return (
-    <>
+    <ClaudeProvider relay={relay}>
       <Layout relay={relay} openLayouts={() => setChoosing(true)} />
-      <Toast error={relay.error} link={relay.link} />
+      <div className="notices">
+        <Toast error={relay.error} link={relay.link} />
+        <ClaudeProgress />
+      </div>
       {choosing && (
         <Sheet label="Choose a layout" onClose={() => setChoosing(false)}>
           <div className="layout-grid">
@@ -80,6 +84,6 @@ export function App() {
           </div>
         </Sheet>
       )}
-    </>
+    </ClaudeProvider>
   )
 }

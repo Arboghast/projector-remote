@@ -30,6 +30,7 @@ class ClaudeRunner(
     private var process: Process? = null
     @Volatile private var stopped = false
     private var job: Job? = null
+    @Volatile private var runId = 0
     @Volatile private var latest: RelayEvent.Claude? = null
     @Volatile private var latestAt = 0L
 
@@ -45,6 +46,7 @@ class ClaudeRunner(
         if (text.isEmpty()) throw InvalidCommand("say what you'd like Claude to do")
         if (working) throw InvalidCommand("Claude is still on the last request; stop it first")
         stopped = false
+        runId++
         agent.newTask()
         job = scope.launch(Dispatchers.IO) { run(text) }
     }
@@ -71,13 +73,14 @@ class ClaudeRunner(
     }
 
     private suspend fun publish(event: RelayEvent.Claude) {
-        latest = event
+        latest = event.copy(run = runId)
         latestAt = System.currentTimeMillis()
-        report(event)
+        report(event.copy(run = runId))
     }
 
     private suspend fun run(text: String) {
-        publish(RelayEvent.Claude("working", "On it…"))
+        // The request as heard goes first, so a misheard one is plain to see on the phone.
+        publish(RelayEvent.Claude("working", text, kind = "request"))
         val outcome = try {
             launchAndFollow(text)
         } catch (e: Exception) {

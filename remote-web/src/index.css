@@ -11,6 +11,8 @@
   --warn: #f5a524;
   --coral: #ff7a59;
   --danger: #ff5c5c;
+  /* Claude: the same orange the wall glows while it's in control. */
+  --claude: #ff8a4c;
   --radius: 22px;
   --gap: 14px;
 

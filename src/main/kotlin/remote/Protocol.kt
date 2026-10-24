@@ -169,11 +169,11 @@ sealed interface RelayEvent {
 
     /**
      * Claude's progress on a request. [phase] is working, done, failed or stopped; while working,
-     * [kind] says whether [text] is a status, a step (a tool call in words), something Claude
-     * said, or a thought.
+     * [kind] says whether [text] is the request as heard, a status, a step (a tool call in words),
+     * something Claude said, or a thought. [run] tells one request's events from the next.
      */
     @Serializable @SerialName("claude")
-    data class Claude(val phase: String, val text: String, val kind: String = "status") : RelayEvent
+    data class Claude(val phase: String, val text: String, val kind: String = "status", val run: Int = 0) : RelayEvent
 }
 
 /** The name phones and Claude use for a key, e.g. "volup". */

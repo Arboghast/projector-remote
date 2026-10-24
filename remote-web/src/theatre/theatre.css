@@ -37,7 +37,8 @@
   pointer-events: none;
 }
 
-.theatre-corner .corner-bar > * {
+.theatre-corner .corner-bar > :not(.corner-end),
+.theatre-corner .corner-end > * {
   pointer-events: auto;
 }
 

@@ -28,6 +28,9 @@ const paths = {
   undo: 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5',
   dpad: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z',
   pad: 'M4 5h16v14H4zM9 15h6',
+  spark: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18 16l.8 2.2L21 19l-2.2.8L18 22l-.8-2.2L15 19l2.2-.8z',
+  stop: 'M7 7h10v10H7z',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
 } as const
 
 export type IconName = keyof typeof paths

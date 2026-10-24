@@ -704,13 +704,26 @@
   background: var(--border);
 }
 
-.toast {
+/* Notices stack here, one under another, rather than on top of each other. */
+.notices {
   position: fixed;
-  z-index: 20;
-  left: 50%;
+  z-index: 11;
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
   top: max(44px, calc(env(safe-area-inset-top) + 32px));
-  transform: translateX(-50%);
-  max-width: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.notices > * {
+  pointer-events: auto;
+}
+
+.toast {
+  max-width: 100%;
   padding: 10px 14px;
   border-radius: 12px;
   background: var(--surface-raised);
@@ -781,6 +794,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 14px 0 8px;
+}
+
+.corner-end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Quiet, but the link dot stays at full strength: it's how you know presses will land. */

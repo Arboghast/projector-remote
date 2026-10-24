@@ -28,6 +28,8 @@ export type RemoteCommand =
   | { type: 'ink'; id: string; points: [number, number][]; color: string; size: number; tool: InkTool }
   | { type: 'ink-clear' }
   | { type: 'ink-undo' }
+  | { type: 'ask'; text: string }
+  | { type: 'ask-stop' }
 
 export type NowPlaying = {
   app: string
@@ -57,8 +59,18 @@ export type RelayEvent =
   | { type: 'error'; message: string }
   | { type: 'state'; state: ProjectorState }
   | { type: 'shelf'; items: ShelfItem[] }
+  | ClaudeEvent
 
-const EVENT_TYPES = new Set(['status', 'error', 'state', 'shelf'])
+/** Claude's progress on a spoken request; `kind` says what a working update's text is. */
+export type ClaudeEvent = {
+  type: 'claude'
+  phase: 'working' | 'done' | 'failed' | 'stopped'
+  text: string
+  kind: 'request' | 'status' | 'step' | 'said' | 'thought'
+  run: number
+}
+
+const EVENT_TYPES = new Set(['status', 'error', 'state', 'shelf', 'claude'])
 
 /** The relay is ours and its shapes mirror Protocol.kt, so only the discriminator is checked here. */
 export function parseRelayEvent(raw: string): RelayEvent | null {

@@ -9,6 +9,7 @@ type Recognition = {
   onerror: ((e: { error: string }) => void) | null
   start: () => void
   stop: () => void
+  abort: () => void
 }
 type RecognitionCtor = new () => Recognition
 
@@ -49,7 +50,8 @@ export function useVoice(onText: (text: string) => void) {
   const onTextRef = useRef(onText)
   onTextRef.current = onText
 
-  useEffect(() => () => active.current?.stop(), [])
+  // Leaving drops whatever was being heard rather than acting on it.
+  useEffect(() => () => cancelRec(active.current), [])
 
   useEffect(() => {
     if (!problem) return
@@ -67,9 +69,14 @@ export function useVoice(onText: (text: string) => void) {
     const rec = new Ctor()
     rec.lang = navigator.language
     rec.interimResults = false
+    // iOS can report one utterance more than once; only the first counts.
+    let heard = false
     rec.onresult = (e) => {
       const transcript = Array.from(e.results).map((r) => r[0]?.transcript ?? '').join(' ').trim()
-      if (transcript) onTextRef.current(transcript)
+      if (!transcript || heard) return
+      heard = true
+      rec.stop()
+      onTextRef.current(transcript)
     }
     rec.onerror = (e) => setProblem(voiceProblem(e.error))
     rec.onend = () => {
@@ -88,5 +95,14 @@ export function useVoice(onText: (text: string) => void) {
     }
   }, [])
 
-  return { supported, listening, problem, toggle }
+  /** Stops listening and throws away anything heard so far. */
+  const cancel = useCallback(() => cancelRec(active.current), [])
+
+  return { supported, listening, problem, toggle, cancel }
+}
+
+function cancelRec(rec: Recognition | null) {
+  if (!rec) return
+  rec.onresult = null
+  rec.abort()
 }

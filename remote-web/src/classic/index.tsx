@@ -1,5 +1,6 @@
 import type { LayoutProps } from '../app'
 import { LayoutButton, LinkDot } from '../shared/chrome'
+import { AskButton } from '../shared/Claude'
 import { DPad } from '../shared/DPad'
 import { KeyRow } from '../shared/KeyRow'
 import { WallTyping } from '../shared/TextEntry'
@@ -14,6 +15,7 @@ export function Classic({ relay, openLayouts }: LayoutProps) {
   return (
     <main className="classic">
       <header className="classic-status">
+        <AskButton />
         <LinkDot link={link} label />
         <LayoutButton onClick={openLayouts} />
       </header>

@@ -24,6 +24,11 @@
   right: -8px;
 }
 
+.classic-status .ask-button {
+  position: absolute;
+  left: -8px;
+}
+
 .classic-deck,
 .classic-controls {
   display: flex;

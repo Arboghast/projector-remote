@@ -236,11 +236,18 @@ class AgentTools(
                 "\nTap its centre, or move focus to it with the arrow keys and press ok."
         }
         return buildString {
+            // A browser's page is one opaque WebView to Android: its text never reaches the layout tree.
+            if (nodes.any { "WebView" in it.kind && it.box.coversHalf() }) {
+                append("This is a web page, whose content Android can't read out: take a screenshot and look for \"$target\" there.")
+                offPage(target)?.let { append("\n$it") }
+                return@buildString
+            }
             append("\"$target\" isn't on screen.")
             offPage(target)?.let { append("\n$it") }
             nodes.firstOrNull { it.focused }?.let { append("\nFocus is on: ${place(it)}.") }
             if (nodes.any { it.scrollable }) append("\nPart of the screen scrolls, so it may be further along: scroll and locate again.")
-            val visible = nodes.map { it.label }.filter { it.isNotBlank() }.distinct().take(VISIBLE_SAMPLE)
+            // Only what a person can read; ids like "rlRoot" are noise here.
+            val visible = nodes.map { it.text.ifBlank { it.description } }.filter { it.isNotBlank() }.distinct().take(VISIBLE_SAMPLE)
             if (visible.isNotEmpty()) append("\nVisible now: ${visible.joinToString(" · ")}")
         }
     }
@@ -301,6 +308,8 @@ class AgentTools(
         val label = KEY_LABELS[key] ?: key.wire
         return label + if (hold) " (hold)" else if (count > 1) " ×$count" else ""
     }
+
+    private fun Box.coversHalf() = (right - left).toLong() * (bottom - top) >= Wall.WIDTH.toLong() * Wall.HEIGHT / 2
 
     private fun shot(screenPx: Int) = screenPx * SHOT_W / Wall.WIDTH
     private fun pct(depth: Double) = "${(depth * 100).roundToInt()}%"
