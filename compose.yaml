@@ -5,13 +5,21 @@ services:
     restart: unless-stopped
     # Host networking: adb reaches the projector on the LAN, and phones reach port 8790 directly.
     network_mode: host
+    # Reaps the commands Claude runs, which would otherwise linger as zombies under the JVM.
+    init: true
     environment:
       PROJECTOR_ADB: ${PROJECTOR_ADB:-192.168.1.5:5555}
       PORT: ${PORT:-8790}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
     volumes:
       - ./data:/data
       # adb's key: keeps the projector's "allow USB debugging" approval across rebuilds.
       - ./data/adb:/root/.android
+      # Claude Code's own login and settings for spoken requests, kept apart from any Claude Code
+      # you use on this machine so the two never sign each other out. Sign in once with:
+      #   docker compose exec remote claude
+      - ./data/claude-home:/root/.claude
 
   # Optional HTTPS entry point at https://<TS_HOSTNAME>.<tailnet>.ts.net. Enable with COMPOSE_PROFILES=tailscale.
   tailscale:

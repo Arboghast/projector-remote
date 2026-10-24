@@ -27,6 +27,19 @@ class ShareRoutesTest {
     }
 
     @Test
+    fun `sockets are taken only from the remote's own page`() {
+        assertTrue(trustedOrigin(null, "192.168.1.20"))
+        assertTrue(trustedOrigin("http://192.168.1.20:8790", "192.168.1.20"))
+        assertTrue(trustedOrigin("https://projector.tail1234.ts.net", "127.0.0.1"))
+        assertTrue(trustedOrigin("http://localhost:5173", "127.0.0.1"))
+        assertTrue(trustedOrigin("http://10.0.0.5:8790", "pi.lan"))
+        assertFalse(trustedOrigin("https://evil.example", "192.168.1.20"))
+        assertFalse(trustedOrigin("https://192.168.1.20.evil.example", "192.168.1.20"))
+        assertFalse(trustedOrigin("null", "192.168.1.20"))
+        assertFalse(trustedOrigin("http://8.8.8.8", "192.168.1.20"))
+    }
+
+    @Test
     fun `the saved page escapes what it shows`() {
         val page = sharedPage("https://x.com/?q=<script>", null)
         assertTrue("&lt;script&gt;" in page)

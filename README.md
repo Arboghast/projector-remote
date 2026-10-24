@@ -30,9 +30,9 @@ iPhone / Galaxy / browser  ──Wi-Fi (http :8790)──────▶  relay 
 
 | Path | What it is |
 | --- | --- |
-| `src/main/kotlin/remote/` | The relay: command dispatch (`Relay`), app workarounds (`AppQuirks`), incoming links (`ShareRoutes`), the scrcpy input and video helpers (`InputServer`, `ScreenStream`, `ScrcpyServer`), the drawing overlay (`InkOverlay`), projector state polling (`ProjectorMonitor`, `StateParser`), and the Shelf (`ShelfStore`) |
+| `src/main/kotlin/remote/` | The relay: command dispatch (`Relay`), app workarounds (`AppQuirks`), incoming links (`ShareRoutes`), the scrcpy input and video helpers (`InputServer`, `ScreenStream`, `ScrcpyServer`), the drawing overlay (`InkOverlay`), projector state polling (`ProjectorMonitor`, `StateParser`), the Shelf (`ShelfStore`), and Claude: its MCP tools (`Mcp`, `AgentTools`, `Locator`), whether it is in control (`Agent`) and spoken requests (`ClaudeRunner`) |
 | `remote-web/` | The phone app (Vite, React, TypeScript). Six layouts: Theatre (default), Dark, Lens, Classic, Pads and Shelf, built from shared pieces in `src/shared` and `src/pads` |
-| `overlay-app/` | Projector Ink: a tiny Android app that draws strokes over whatever is on screen |
+| `overlay-app/` | Projector Ink: a tiny Android app that draws strokes over whatever is on screen, and Claude's glow and cursor while it's in control |
 | `browser-extension/` | Send to Projector, for Edge and Chrome: a toolbar button and right-click item |
 | `docs/` | Setup guide and diagrams |
 
@@ -55,6 +55,15 @@ Built for a Raspberry Pi 5 with Docker, but any Linux machine with Docker on the
 **To update** after pushing changes, run `./deploy.sh` on the server. It pulls, rebuilds and restarts.
 
 **Tailscale (optional).** Uncomment `COMPOSE_PROFILES` in `.env` and run `./deploy.sh`. The first time, `docker compose logs tailscale` prints a login link; open it and approve the device. The login is kept in `data/tailscale`. A second container joins your tailnet as `projector` and serves the remote at `https://projector.<tailnet>.ts.net`. Use that address away from home, and for anything phones only allow on https: voice typing, keeping the screen awake, and installing the remote as an app (which the Galaxy share sheet needs).
+
+**Claude.** Say what you want from the remote ("put on the latest Veritasium video", "go to the conclusion of this article") and Claude does it on the projector while you watch. The wall glows orange while Claude is in control, a cursor shows what it's about to press, and the phone shows each step and a Stop button. It runs Claude Code inside the relay's container with the server's own login:
+
+1. `./deploy.sh`. The image includes Claude Code.
+2. Sign it in once: `docker compose exec remote claude`, then follow the login link. Or run `claude setup-token` on any computer and put the token in `.env` as `CLAUDE_CODE_OAUTH_TOKEN`. The login is kept in `data/claude-home`, apart from any Claude Code you use on the server itself, so the two never sign each other out.
+
+Each request uses your Claude plan. Until Claude is signed in, requests fail with Claude's own message on the phone.
+
+Claude gets the projector's tools (an MCP server the relay serves at `/mcp`) and a root shell in the container with adb, for anything the tools can't do. Its working folder isn't a jail. Every request and every shell command it runs goes in the relay's log (`docker compose logs remote`). Only the remote's own page can open its socket, so other web pages can't send requests. You can connect another Claude to the same tools with `claude mcp add --transport http projector http://<server-ip>:8790/mcp`. Like the rest of the remote, `/mcp` has no login: anyone on your Wi-Fi or tailnet can use it.
 
 Each device's share setup (iPhone Shortcut, Galaxy, Windows extension) is in [docs/guides/send-to-projector-setup.md](docs/guides/send-to-projector-setup.md).
 
@@ -86,6 +95,10 @@ The relay reads these environment variables. On the server, `PROJECTOR_ADB` and 
 | `SHELF_FILE` | `shelf.json` | Where saved links are kept |
 | `SCRCPY_SERVER` | `tools/scrcpy-server-v5.0.1` | scrcpy server jar |
 | `INK_OVERLAY_APK` | `tools/ink-overlay.apk` | The drawing overlay app |
+| `CLAUDE_BIN` | `claude` | Claude Code, for spoken requests |
+| `CLAUDE_DIR` | `claude-work` | Claude's working folder (the Docker image uses `/data/claude`) |
+| `CLAUDE_MODEL` | Claude Code's default | Model for spoken requests |
+| `CLAUDE_CODE_OAUTH_TOKEN` | none | A token from `claude setup-token`, instead of signing in inside the container |
 
 The browser extension reads the server's addresses from `browser-extension/config.js` (Wi-Fi first, then Tailscale); copy `config.example.js` to make it.
 

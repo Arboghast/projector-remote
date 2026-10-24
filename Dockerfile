@@ -18,7 +18,15 @@ RUN ./gradlew --no-daemon --quiet installDist
 
 # ── Runtime ──
 FROM eclipse-temurin:21-jre
-RUN apt-get update && apt-get install -y --no-install-recommends adb && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends adb curl ca-certificates && rm -rf /var/lib/apt/lists/*
+# Claude Code, for spoken requests. Its login is kept in data/claude-home (see compose.yaml).
+# Pinned, so a rebuild changes it only on purpose: bump the version to update.
+ARG CLAUDE_CODE_VERSION=2.1.308
+RUN curl -fsSL https://claude.ai/install.sh | bash -s "$CLAUDE_CODE_VERSION"
+ENV PATH="/root/.local/bin:$PATH" \
+    DISABLE_AUTOUPDATER=1 \
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+    CLAUDE_CONFIG_DIR=/root/.claude
 WORKDIR /app
 COPY --from=relay /src/build/install/projector-remote ./
 COPY --from=web /web/dist ./web
@@ -27,5 +35,6 @@ ADD --checksum=sha256:764eb6f79811d5211fe9df341120882ba9994c7a61b897d7bf3fb662e5
 COPY tools/ink-overlay.apk tools/
 ENV HOST=0.0.0.0 \
     WEB_DIR=/app/web \
-    SHELF_FILE=/data/shelf.json
+    SHELF_FILE=/data/shelf.json \
+    CLAUDE_DIR=/data/claude
 CMD ["bin/projector-remote"]

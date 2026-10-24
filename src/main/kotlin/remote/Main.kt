@@ -29,7 +29,10 @@ fun main() {
         relay.install(this)
         shell.watch(this)
         projector.watch { relay.hasRemotes }
-        monitor.subscribe(ApplicationStopped) { shell.close() }
+        monitor.subscribe(ApplicationStopped) {
+            relay.shutdown()
+            shell.close()
+        }
         LoggerFactory.getLogger("remote").info("relay on http://${config.host}:${config.port} -> projector ${config.device}")
     }.start(wait = true)
 }

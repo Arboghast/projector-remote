@@ -2,6 +2,7 @@ package remote
 
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -19,7 +20,10 @@ import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.webSocket
+import io.ktor.server.request.host
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
@@ -57,6 +61,11 @@ class Relay(
     private lateinit var agentTools: AgentTools
 
     val hasRemotes: Boolean get() = remotes.isNotEmpty()
+
+    /** The relay is going away: a request Claude is still on mustn't outlive it. */
+    fun shutdown() {
+        if (::runner.isInitialized) runner.stop()
+    }
 
     private fun status() = RelayEvent.Status(shell.connected.value, shell.device)
 
@@ -158,13 +167,25 @@ class Relay(
 
         routing {
             get("/health") { call.respond<RelayEvent>(status()) }
-            webSocket("/ws") { remoteSession() }
-            webSocket("/screen-stream") { screenSession() }
+            webSocket("/ws") { if (fromOurPage()) remoteSession() }
+            webSocket("/screen-stream") { if (fromOurPage()) screenSession() }
             shareRoutes(::execute, suggestions)
             screenRoutes()
             mcpRoutes(agentTools.all)
             if (webDir.isDirectory) staticFiles("/", webDir) else log.warn("no remote page at {}; build remote-web first", webDir.absolutePath)
         }
+    }
+
+    /**
+     * Browsers let any web page open a WebSocket to any address, so a page elsewhere could drive the
+     * projector (and ask Claude, which has a shell). Sockets are only taken from the remote's own page.
+     */
+    private suspend fun DefaultWebSocketServerSession.fromOurPage(): Boolean {
+        val origin = call.request.headers[HttpHeaders.Origin]
+        if (trustedOrigin(origin, call.request.host())) return true
+        log.warn("refused a socket from {}", origin)
+        close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "not from the remote's page"))
+        return false
     }
 
     private suspend fun DefaultWebSocketServerSession.remoteSession() {
@@ -174,7 +195,7 @@ class Relay(
             sendEvent(status())
             sendEvent(RelayEvent.State(projector.state.value))
             sendEvent(RelayEvent.Shelf(shelf.items.value))
-            runner.latest?.takeIf { runner.working }?.let { sendEvent(it) }
+            runner.current?.let { sendEvent(it) }
             for (frame in incoming) {
                 if (frame !is Frame.Text) continue
                 val command = try {
@@ -244,3 +265,17 @@ class Relay(
     }
 }
 
+
+/**
+ * Whether a socket's Origin is the remote's own page: no Origin (not a browser), the address the
+ * request came to, or how the remote is reached at home: the tailnet, this machine, or a private address.
+ */
+fun trustedOrigin(origin: String?, requestHost: String): Boolean {
+    if (origin == null) return true
+    val host = runCatching { java.net.URI(origin).host }.getOrNull()?.lowercase()?.removeSurrounding("[", "]") ?: return false
+    if (host == requestHost.lowercase() || host.endsWith(".ts.net") || host == "localhost" || host.endsWith(".localhost")) return true
+    val parts = host.split('.').mapNotNull { it.toIntOrNull() }
+    if (parts.size != 4 || host.count { it == '.' } != 3) return host == "::1"
+    val (a, b) = parts
+    return a == 127 || a == 10 || (a == 192 && b == 168) || (a == 172 && b in 16..31) || (a == 100 && b in 64..127)
+}
