@@ -57,6 +57,7 @@ class ShellCommandsTest {
     fun `media links open in their own apps`() {
         assertEquals("com.google.android.youtube.tv", withBrowser.appFor("https://www.youtube.com/watch?v=abc"))
         assertEquals("com.google.android.youtube.tv", withBrowser.appFor("https://youtu.be/abc"))
+        assertEquals("com.google.android.youtube.tvmusic", withBrowser.appFor("https://music.youtube.com/watch?v=abc"))
         assertEquals("com.spotify.tv.android", withBrowser.appFor("https://open.spotify.com/track/x"))
         assertEquals("com.phlox.tvwebbrowser", withBrowser.appFor("https://en.wikipedia.org/wiki/Projector"))
     }

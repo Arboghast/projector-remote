@@ -85,7 +85,9 @@ class ShellCommands(private val browser: String?) {
         const val SWIPE_MS = 150
 
         val APPS = mapOf(
-            setOf("youtube.com", "youtu.be", "music.youtube.com") to Packages.YOUTUBE,
+            setOf("youtube.com", "youtu.be") to Packages.YOUTUBE,
+            // The YouTube TV app refuses music.youtube.com links; the YouTube Music TV app takes them.
+            setOf("music.youtube.com") to Packages.YOUTUBE_MUSIC,
             setOf("open.spotify.com") to Packages.SPOTIFY,
             setOf("twitch.tv", "clips.twitch.tv") to Packages.TWITCH,
         )
