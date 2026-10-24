@@ -9,7 +9,6 @@ export const TV_BRO = 'com.phlox.tvwebbrowser'
 // without words.
 const APPS: Record<string, AppInfo> = {
   'com.google.android.youtube.tv': { name: 'YouTube', color: '#ff4e45' },
-  'com.google.android.youtube.tvmusic': { name: 'YouTube Music', color: '#ff4e45' },
   'com.spotify.tv.android': { name: 'Spotify', color: '#1ed760' },
   [TV_BRO]: { name: 'TV Bro', color: '#5b8cff' },
   'tv.twitch.android.app': { name: 'Twitch', color: '#9b6bff' },
