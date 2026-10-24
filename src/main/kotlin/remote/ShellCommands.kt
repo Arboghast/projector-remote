@@ -51,7 +51,13 @@ class ShellCommands(private val browser: String?) {
         // projector that eventually fails with "Can not link to WebView component" and tabs pile up.
         // Its own extra reuses the current tab instead.
         val sameTab = if (app == Packages.TV_BRO) " --ez com.phlox.tvwebbrowser.EXTRA_OPEN_IN_SAME_TAB true" else ""
-        val data = if (app == Packages.TWITCH) twitchLink(uri) else uri.toString()
+        val data = when {
+            app == Packages.TWITCH -> twitchLink(uri)
+            // The YouTube TV app refuses music.youtube.com links but plays the same video or playlist on youtube.com.
+            app == Packages.YOUTUBE && uri.host.lowercase() == "music.youtube.com" ->
+                URI("https", "www.youtube.com", uri.path, uri.query, null).toString()
+            else -> uri.toString()
+        }
         return "am start -a android.intent.action.VIEW -d ${quote(data)}$target$sameTab"
     }
 
@@ -85,9 +91,7 @@ class ShellCommands(private val browser: String?) {
         const val SWIPE_MS = 150
 
         val APPS = mapOf(
-            setOf("youtube.com", "youtu.be") to Packages.YOUTUBE,
-            // The YouTube TV app refuses music.youtube.com links; the YouTube Music TV app takes them.
-            setOf("music.youtube.com") to Packages.YOUTUBE_MUSIC,
+            setOf("youtube.com", "youtu.be", "music.youtube.com") to Packages.YOUTUBE,
             setOf("open.spotify.com") to Packages.SPOTIFY,
             setOf("twitch.tv", "clips.twitch.tv") to Packages.TWITCH,
         )

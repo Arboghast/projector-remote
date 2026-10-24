@@ -10,7 +10,6 @@ object Wall {
 object Packages {
     const val TV_BRO = "com.phlox.tvwebbrowser"
     const val YOUTUBE = "com.google.android.youtube.tv"
-    const val YOUTUBE_MUSIC = "com.google.android.youtube.tvmusic"
     const val SPOTIFY = "com.spotify.tv.android"
     const val TWITCH = "tv.twitch.android.app"
 
