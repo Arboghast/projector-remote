@@ -22,6 +22,8 @@ fun main() {
             screen = ScreenCapture(shell),
             stream = ScreenStream(scrcpy, shell, this),
             overlay = InkOverlay(shell, File(config.inkOverlayApk)),
+            agent = Agent(this),
+            config = config,
             webDir = File(config.webDir),
         )
         relay.install(this)

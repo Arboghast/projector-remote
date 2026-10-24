@@ -43,6 +43,8 @@ class Relay(
     private val screen: ScreenCapture,
     private val stream: ScreenStream,
     private val overlay: InkOverlay,
+    private val agent: Agent,
+    private val config: Config,
     private val webDir: File,
 ) {
     private val log = LoggerFactory.getLogger(Relay::class.java)
@@ -51,6 +53,8 @@ class Relay(
     private val focus = FocusScroller()
     private val remotes = ConcurrentHashMap.newKeySet<DefaultWebSocketServerSession>()
     private lateinit var quirks: AppQuirks
+    private lateinit var runner: ClaudeRunner
+    private lateinit var agentTools: AgentTools
 
     val hasRemotes: Boolean get() = remotes.isNotEmpty()
 
@@ -70,6 +74,8 @@ class Relay(
             is RelayCommand.ShelfAdd -> addToShelf(command.url, command.from)
             is RelayCommand.ShelfRemove -> shelf.remove(command.id)
             is RelayCommand.ShelfProject -> project(command.id)
+            is RelayCommand.Ask -> runner.ask(command.text)
+            is RelayCommand.AskStop -> runner.stop()
         }
         null
     } catch (e: InvalidCommand) {
@@ -135,14 +141,20 @@ class Relay(
     }
 
     fun install(app: Application) = with(app) {
+        runner = ClaudeRunner(config, agent, app, ::broadcast)
         quirks = AppQuirks(sender, shell, { projector.state.value }, app)
-        input.inUse = { hasRemotes }
+        input.inUse = { hasRemotes || agent.driving.value }
         install(WebSockets) { pingPeriod = 15.seconds }
         install(ContentNegotiation) { json(protocolJson) }
 
         launch { shell.connected.drop(1).collect { broadcast(status()) } }
         launch { projector.state.drop(1).collect { broadcast(RelayEvent.State(it)) } }
         launch { shelf.items.drop(1).collect { broadcast(RelayEvent.Shelf(it)) } }
+        val shown = AgentOverlay(overlay, app)
+        agentTools = AgentTools(agent, ::execute, screen, { projector.state.value }, shell, shown)
+        launch { agent.driving.drop(1).collect { shown.glow(it) } }
+        // Ready the overlay app whenever the projector appears, rather than inside Claude's first action.
+        launch { shell.connected.filter { it }.collect { runCatching { overlay.prepare() } } }
 
         routing {
             get("/health") { call.respond<RelayEvent>(status()) }
@@ -150,6 +162,7 @@ class Relay(
             webSocket("/screen-stream") { screenSession() }
             shareRoutes(::execute, suggestions)
             screenRoutes()
+            mcpRoutes(agentTools.all)
             if (webDir.isDirectory) staticFiles("/", webDir) else log.warn("no remote page at {}; build remote-web first", webDir.absolutePath)
         }
     }
@@ -161,6 +174,7 @@ class Relay(
             sendEvent(status())
             sendEvent(RelayEvent.State(projector.state.value))
             sendEvent(RelayEvent.Shelf(shelf.items.value))
+            runner.latest?.takeIf { runner.working }?.let { sendEvent(it) }
             for (frame in incoming) {
                 if (frame !is Frame.Text) continue
                 val command = try {
@@ -229,3 +243,4 @@ class Relay(
         const val MAX_FROM = 24
     }
 }
+

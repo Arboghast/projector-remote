@@ -10,6 +10,9 @@ data class Config(
     val shelfFile: String,
     val scrcpyServer: String,
     val inkOverlayApk: String,
+    val claudeBin: String,
+    val claudeDir: String,
+    val claudeModel: String?,
 ) {
     companion object {
         fun fromEnv(env: Map<String, String> = System.getenv()) = Config(
@@ -24,6 +27,10 @@ data class Config(
             shelfFile = env["SHELF_FILE"] ?: "shelf.json",
             scrcpyServer = env["SCRCPY_SERVER"] ?: "tools/scrcpy-server-v5.0.1",
             inkOverlayApk = env["INK_OVERLAY_APK"] ?: "tools/ink-overlay.apk",
+            claudeBin = env["CLAUDE_BIN"] ?: "claude",
+            // Claude's working folder, where it keeps the MCP config for its runs.
+            claudeDir = env["CLAUDE_DIR"] ?: "claude-work",
+            claudeModel = env["CLAUDE_MODEL"]?.takeIf { it.isNotBlank() },
         )
     }
 }

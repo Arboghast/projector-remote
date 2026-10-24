@@ -114,6 +114,14 @@ sealed interface RelayCommand : RemoteCommand {
 
     @Serializable @SerialName("ink-undo")
     data object InkUndo : RelayCommand
+
+    /** A spoken request for Claude to carry out on the projector. */
+    @Serializable @SerialName("ask")
+    data class Ask(val text: String) : RelayCommand
+
+    /** Stops Claude's current request. */
+    @Serializable @SerialName("ask-stop")
+    data object AskStop : RelayCommand
 }
 
 // ── Relay → remote ──
@@ -158,4 +166,18 @@ sealed interface RelayEvent {
 
     @Serializable @SerialName("shelf")
     data class Shelf(val items: List<ShelfItem>) : RelayEvent
+
+    /**
+     * Claude's progress on a request. [phase] is working, done, failed or stopped; while working,
+     * [kind] says whether [text] is a status, a step (a tool call in words), something Claude
+     * said, or a thought.
+     */
+    @Serializable @SerialName("claude")
+    data class Claude(val phase: String, val text: String, val kind: String = "status") : RelayEvent
 }
+
+/** The name phones and Claude use for a key, e.g. "volup". */
+val RemoteKey.wire: String get() = RemoteKey.serializer().descriptor.getElementName(ordinal)
+
+/** The name phones and Claude use for a media action, e.g. "fast-forward". */
+val MediaAction.wire: String get() = MediaAction.serializer().descriptor.getElementName(ordinal)

@@ -35,7 +35,9 @@ public final class InkService extends Service {
     private final Handler main = new Handler(Looper.getMainLooper());
     private WindowManager windows;
     private InkView ink;
+    private AgentView agent;
     private boolean shown;
+    private boolean agentShown;
     private volatile boolean running = true;
     private ServerSocket server;
 
@@ -52,6 +54,8 @@ public final class InkService extends Service {
 
         windows = getSystemService(WindowManager.class);
         ink = new InkView(this);
+        agent = new AgentView(this);
+        agent.onHidden = () -> main.post(this::removeAgent);
         new Thread(this::serve, "ink-server").start();
     }
 
@@ -60,25 +64,44 @@ public final class InkService extends Service {
         return START_STICKY;
     }
 
+    /** A full-screen layer that never steals input: the remote keeps driving the app underneath. */
+    private static WindowManager.LayoutParams layer() {
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.TOP | Gravity.START;
+        return lp;
+    }
+
     private void show(boolean on) {
         if (on == shown) return;
         if (on) {
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                    // Never steal input: the remote keeps driving the app underneath.
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                    PixelFormat.TRANSLUCENT);
-            lp.gravity = Gravity.TOP | Gravity.START;
-            windows.addView(ink, lp);
+            windows.addView(ink, layer());
         } else {
             ink.clear();
             windows.removeView(ink);
         }
         shown = on;
+    }
+
+    /** Claude's layer comes and goes on its own; it fades out before its window is removed. */
+    private void showAgent(boolean on) {
+        if (on && !agentShown) {
+            windows.addView(agent, layer());
+            agentShown = true;
+        }
+        if (agentShown) agent.show(on);
+    }
+
+    private void removeAgent() {
+        if (!agentShown || agent.isOn()) return; // switched back on while fading out
+        agentShown = false;
+        windows.removeView(agent);
     }
 
     private void serve() {
@@ -92,7 +115,10 @@ public final class InkService extends Service {
                 } catch (Exception ignored) {
                     // client went away; wait for the next one
                 }
-                main.post(() -> show(false));
+                main.post(() -> {
+                    show(false);
+                    showAgent(false);
+                });
             }
         } catch (Exception e) {
             stopSelf();
@@ -108,6 +134,24 @@ public final class InkService extends Service {
                 case "overlay-off": main.post(() -> show(false)); break;
                 case "ink-clear": main.post(ink::clear); break;
                 case "ink-undo": main.post(ink::undo); break;
+                case "agent-on": main.post(() -> showAgent(true)); break;
+                case "agent-off": main.post(() -> showAgent(false)); break;
+                case "agent-point": {
+                    float x = (float) m.getDouble("x"), y = (float) m.getDouble("y");
+                    main.post(() -> agent.point(x, y));
+                    break;
+                }
+                case "agent-tap": {
+                    float x = (float) m.getDouble("x"), y = (float) m.getDouble("y");
+                    main.post(() -> agent.tap(x, y));
+                    break;
+                }
+                case "agent-quiet": main.post(agent::quiet); break;
+                case "agent-say": {
+                    String text = m.optString("text");
+                    main.post(() -> agent.say(text));
+                    break;
+                }
                 case "ink": {
                     String id = m.getString("id");
                     String color = m.optString("color", "#f5a524");
@@ -136,7 +180,11 @@ public final class InkService extends Service {
             if (server != null) server.close();
         } catch (Exception ignored) {
         }
-        main.post(() -> show(false));
+        main.post(() -> {
+            show(false);
+            if (agentShown) windows.removeView(agent);
+            agentShown = false;
+        });
         super.onDestroy();
     }
 
