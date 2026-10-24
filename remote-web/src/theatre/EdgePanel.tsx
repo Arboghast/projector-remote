@@ -38,8 +38,9 @@ export function EdgePanel({ edge, shown, open, glance = false, onClose, children
   // Pushing a panel back toward its edge closes it.
   const pos = (e: PointerEvent) => (edge === 'right' ? e.clientX : e.clientY)
   const onPointerDown = (e: PointerEvent<HTMLElement>) => {
-    // Touches on the wall's picture press and scroll the wall; only the rest of the panel pushes it away.
-    if ((e.target as Element).closest('[data-wall-picture]')) return
+    // Touches on the wall's picture press and scroll the wall, and a Shelf card swipes on its own;
+    // only the rest of the panel pushes it away.
+    if ((e.target as Element).closest('[data-wall-picture], .shelf-face')) return
     back.current = { start: pos(e), d: 0 }
   }
   const onPointerMove = (e: PointerEvent<HTMLElement>) => {
@@ -58,6 +59,7 @@ export function EdgePanel({ edge, shown, open, glance = false, onClose, children
       className={`edge-panel edge-${edge}`}
       data-settling={shown === null && !pushed ? true : undefined}
       data-hidden={shown === null && !open && !glance ? true : undefined}
+      data-open={open || undefined}
       style={{ transform: panelTransform(edge, shown, pushed, open, glance) }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

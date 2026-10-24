@@ -23,7 +23,7 @@ export function Classic({ relay, openLayouts }: LayoutProps) {
         <div className="classic-controls">
           <DPad send={send} />
           <PlaybackRow state={state} send={send} />
-          <KeyRow send={send} />
+          <KeyRow state={state} send={send} />
         </div>
       </div>
 

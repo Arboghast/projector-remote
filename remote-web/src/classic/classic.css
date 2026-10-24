@@ -52,7 +52,8 @@
     justify-content: center;
   }
 
+  /* Also capped by height: a phone on its side is wide enough for this row but only ~375px tall. */
   .classic-controls .dpad {
-    --size: min(34vw, 320px);
+    --size: min(34vw, 320px, 100dvh - 200px);
   }
 }

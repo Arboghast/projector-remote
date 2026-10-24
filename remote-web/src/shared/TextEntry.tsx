@@ -36,8 +36,9 @@ function TextEntry({ send, onClose }: { send: Props['send']; onClose: () => void
   // Browsers only raise the keyboard for a recent touch; if this doesn't, one tap on the field does.
   useEffect(() => input.current?.focus(), [])
 
+  // Sent as typed: trimming would join "hello " and "world" into "helloworld" on the wall.
   const type = (enter: boolean) => {
-    if (text) send({ type: 'text', text })
+    if (text) send({ type: 'text', text: value })
     if (enter) send({ type: 'key', key: 'enter' })
     setValue('')
   }

@@ -13,8 +13,8 @@ export function focusApp(state: ProjectorState) {
   return appInfo(state.nowPlaying?.app ?? state.app)
 }
 
-/** A slim "what's on" bar for layouts where playback is secondary. */
-export function NowPlayingPill({ state, send }: Props) {
+/** A slim "what's on" bar for layouts where playback is secondary; the playback row under it has the controls. */
+export function NowPlayingPill({ state }: { state: ProjectorState }) {
   const app = focusApp(state)
   const now = state.nowPlaying
   const inBrowser = (now?.app ?? state.app) === TV_BRO
@@ -23,9 +23,6 @@ export function NowPlayingPill({ state, send }: Props) {
     <div className="now-pill" style={appStyle(app.color)}>
       <span className="app-dot" />
       <span className="now-pill-title">{title}</span>
-      <button className="icon-button" aria-label={now?.playing ? 'Pause' : 'Play'} onClick={() => send({ type: 'media', action: 'play-pause' })}>
-        <Icon name={now?.playing ? 'pause' : 'play'} />
-      </button>
     </div>
   )
 }
@@ -48,11 +45,12 @@ export function PlaybackRow({ state, send }: Props) {
       </button>
       <button className="icon-button" aria-label="Forward 10 seconds" onClick={media('fast-forward')}><Icon name="forward" /></button>
       <button className="icon-button" aria-label="Next" onClick={media('next')}><Icon name="next" /></button>
-      <span className="playback-gap" />
-      <button className="playback-chip" aria-label="Subtitles" onClick={() => send({ type: 'key', key: 'captions' })}>CC</button>
-      <button className="playback-chip" aria-label="Player settings: quality, audio" onClick={() => send({ type: 'player-settings' })}>
-        <Icon name="settings" size={16} />
-      </button>
+      <span className="playback-extra">
+        <button className="playback-chip" aria-label="Subtitles" onClick={() => send({ type: 'key', key: 'captions' })}>CC</button>
+        <button className="playback-chip" aria-label="Player settings: quality, audio" onClick={() => send({ type: 'player-settings' })}>
+          <Icon name="settings" size={16} />
+        </button>
+      </span>
     </div>
   )
 }

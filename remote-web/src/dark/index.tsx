@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type PointerEvent } from 'react'
 import type { LayoutProps } from '../app'
 import { CursorPad } from '../pads/pads'
 import { CornerBar } from '../shared/chrome'
@@ -33,9 +33,11 @@ export function Dark({ relay, openLayouts }: LayoutProps) {
   const [showLegend, setShowLegend] = useState(() => !legendSeen())
   const draw = useDrawing(send)
 
-  // The legend teaches once, then gets out of the way for good.
-  const hideLegend = () => {
+  // The legend teaches once, then gets out of the way for good. The touch that hides it stops here,
+  // so it doesn't also click the wall.
+  const hideLegend = (e: PointerEvent) => {
     if (!showLegend) return
+    e.stopPropagation()
     setShowLegend(false)
     try {
       localStorage.setItem(LEGEND_KEY, '1')
@@ -50,7 +52,7 @@ export function Dark({ relay, openLayouts }: LayoutProps) {
     <main className="layout dark">
       <CornerBar link={link} openLayouts={openLayouts} />
 
-      <div className="dark-surface" onPointerDown={hideLegend}>
+      <div className="dark-surface" onPointerDownCapture={hideLegend}>
           <CursorPad send={send} className="dark-pad">
             {showLegend && (
               <ul className="dark-legend" aria-label="Gestures">

@@ -14,7 +14,11 @@ export default defineConfig({
     allowedHosts: TAILNET_HOSTS,
     proxy: {
       '/ws': { target: RELAY, ws: true },
+      '/screen-stream': { target: RELAY, ws: true },
+      '/screen.jpg': RELAY,
+      '/suggest': RELAY,
       '/share': RELAY,
+      '/shelf': RELAY,
       '/health': RELAY,
     },
   },

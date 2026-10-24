@@ -220,6 +220,11 @@
   color: var(--app);
 }
 
+/* Fully open, the playback row below has its own play/pause. */
+.edge-bottom[data-open] .sheet-media {
+  visibility: hidden;
+}
+
 .sheet-full {
   display: flex;
   flex-direction: column;
@@ -325,6 +330,27 @@
 
 .sheet-rocker button + button {
   box-shadow: inset 1px 0 0 var(--border);
+}
+
+/* A phone on its side is too short for the column: the wheel and keys go side by side. */
+@media (max-height: 500px) {
+  .sheet-full {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 32px;
+  }
+
+  .sheet-full > .sheet-keys {
+    width: auto;
+    max-width: none;
+    margin-inline: 0;
+    gap: 12px;
+  }
+
+  .wheel {
+    --size: 150px;
+  }
 }
 
 .theatre .text-entry {

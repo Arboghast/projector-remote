@@ -101,13 +101,13 @@
 /* ── Buttons ── */
 
 .icon-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 20px;
+  border-radius: 22px;
   color: var(--text-muted);
 }
 
@@ -158,28 +158,6 @@
 
 .chip:disabled {
   opacity: 0.4;
-}
-
-.chip-accent {
-  background: var(--accent);
-  color: #fff;
-}
-
-.pill {
-  height: 34px;
-  padding: 0 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 17px;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.pill svg {
-  width: 14px;
-  height: 14px;
 }
 
 .actions {
@@ -563,16 +541,6 @@
 
 /* ── Now playing ── */
 
-
-
-
-
-
-
-
-
-
-
 .now-pill {
   display: flex;
   align-items: center;
@@ -616,9 +584,9 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 48px;
+  height: 52px;
   padding: 0 4px 0 16px;
-  border-radius: 24px;
+  border-radius: 26px;
   background: var(--bg);
   border: 1px solid var(--border);
 }
@@ -643,8 +611,8 @@
 .text-entry-icon,
 .text-entry-go {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -680,9 +648,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 16px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 22px;
   font-size: 13px;
   color: var(--text-muted);
 }
@@ -749,6 +717,12 @@
   border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
   font-size: 13px;
   animation: fade 0.18s ease-out;
+  /* It only informs; touches go through to whatever is underneath. */
+  pointer-events: none;
+}
+
+.toast[data-offline] {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
 }
 
 @keyframes rise {
@@ -762,20 +736,24 @@
 /* ── Playback row ── */
 
 /* Playback, shown only while something is playing. */
+/* On the narrowest phones the CC and settings chips wrap onto their own line rather than clip. */
 .playback {
   align-self: stretch;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 2px;
 }
 
-.playback-gap {
-  flex: 1;
+.playback-extra {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
 }
 
 .playback-chip {
-  height: 36px;
+  height: 44px;
   min-width: 44px;
   padding: 0 10px;
   display: flex;
@@ -784,7 +762,7 @@
   border-radius: 18px;
   background: var(--surface-raised);
   color: var(--text);
-  font: 600 13px var(--mono, ui-monospace, monospace);
+  font: 600 13px ui-monospace, monospace;
   letter-spacing: 0.04em;
 }
 
@@ -803,6 +781,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 14px 0 8px;
+}
+
+/* Quiet, but the link dot stays at full strength: it's how you know presses will land. */
+.corner-bar .layout-button {
   opacity: 0.5;
 }
 

@@ -5,6 +5,7 @@ import { DPad } from '../shared/DPad'
 import { KeyRow } from '../shared/KeyRow'
 import { focusApp, NowPlayingPill, PlaybackRow } from '../shared/NowPlaying'
 import { ShelfList } from '../shared/Shelf'
+import { WallTyping } from '../shared/TextEntry'
 import './shelf.css'
 
 /** Collect now, project later: the queue is the hero; on a wide screen the remote sits beside it. */
@@ -18,7 +19,7 @@ export function Shelf({ relay, openLayouts }: LayoutProps) {
 
       <div className="shelf-body">
         <section className="shelf-main">
-          <NowPlayingPill state={state} send={send} />
+          <NowPlayingPill state={state} />
           <PlaybackRow state={state} send={send} />
           <div className="shelf-heading">
             <h1>Shelf</h1>
@@ -31,10 +32,12 @@ export function Shelf({ relay, openLayouts }: LayoutProps) {
         <aside className="shelf-side">
           <div className="shelf-remote">
             <DPad send={send} />
-            <KeyRow send={send} />
+            <KeyRow state={state} send={send} />
           </div>
         </aside>
       </div>
+
+      <WallTyping state={state} send={send} />
     </main>
   )
 }

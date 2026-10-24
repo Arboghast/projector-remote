@@ -52,10 +52,21 @@ export function Theatre({ relay, openLayouts }: LayoutProps) {
     },
   }, feedback)
 
-  // Touching the canvas while a panel is out puts it away; the touch still moves the cursor.
+  // Touching the canvas while a panel is out only puts it away: that finger neither clicks nor moves the wall.
+  const dismissing = useRef<number | null>(null)
   const onCanvasDown = (e: PointerEvent<HTMLElement>) => {
-    if (open) setOpen(null)
+    if (open) {
+      dismissing.current = e.pointerId
+      return setOpen(null)
+    }
     canvas.onPointerDown(e)
+  }
+  const unlessDismissing = (handler: (e: PointerEvent<HTMLElement>) => void) => (e: PointerEvent<HTMLElement>) => {
+    if (e.pointerId !== dismissing.current) handler(e)
+  }
+  const onCanvasUp = (e: PointerEvent<HTMLElement>) => {
+    if (e.pointerId === dismissing.current) dismissing.current = null
+    else canvas.onPointerUp(e)
   }
 
   const shown = (panel: Panel) => drag && PANEL_FOR[drag.edge] === (panel === 'glance' ? 'sheet' : panel) ? drag.distance : null
@@ -66,7 +77,16 @@ export function Theatre({ relay, openLayouts }: LayoutProps) {
 
   return (
     <main className="layout theatre" style={appStyle(app.color)}>
-      <div className="theatre-canvas" {...canvas} onPointerDown={onCanvasDown} />
+      <div
+        className="theatre-canvas"
+        onPointerDown={onCanvasDown}
+        onPointerMove={unlessDismissing(canvas.onPointerMove)}
+        onPointerUp={onCanvasUp}
+        onPointerCancel={() => {
+          dismissing.current = null
+          canvas.onPointerCancel()
+        }}
+      />
       <Trails ref={trails} linked={linked} />
 
       <div className="theatre-corner">

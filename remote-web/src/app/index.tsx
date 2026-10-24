@@ -19,8 +19,8 @@ type LayoutId = 'theatre' | 'pads' | 'classic' | 'lens' | 'shelf' | 'dark'
 
 const LAYOUTS: { id: LayoutId; name: string; blurb: string; icon: IconName; component: ComponentType<LayoutProps> }[] = [
   { id: 'theatre', name: 'Theatre', blurb: 'Everything, immersive', icon: 'play', component: Theatre },
-  { id: 'pads', name: 'Pads', blurb: 'Trackpad prototypes', icon: 'layouts', component: Pads },
-  { id: 'classic', name: 'Classic', blurb: 'Trackpad and D-pad', icon: 'home', component: Classic },
+  { id: 'pads', name: 'Pads', blurb: 'Trackpad prototypes', icon: 'pad', component: Pads },
+  { id: 'classic', name: 'Classic', blurb: 'Trackpad and D-pad', icon: 'dpad', component: Classic },
   { id: 'lens', name: 'Lens', blurb: 'The wall is the trackpad', icon: 'grab', component: Lens },
   { id: 'shelf', name: 'Shelf', blurb: 'Collect links, project later', icon: 'shelf', component: Shelf },
   { id: 'dark', name: 'Dark', blurb: 'Gestures only', icon: 'moon', component: Dark },

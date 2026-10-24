@@ -5,7 +5,7 @@ import { Icon } from './icons'
 const LINK_LABEL: Record<Link, string> = {
   connecting: 'Connecting',
   'relay-down': 'Relay offline',
-  'projector-off': 'Projector asleep',
+  'projector-off': 'Projector offline',
   ready: 'Connected',
 }
 
@@ -60,10 +60,16 @@ export function useWakeLock() {
   }, [])
 }
 
-/** Relay errors, shown only while the projector is reachable (otherwise the link dot already says why). */
+const OFFLINE: Partial<Record<Link, string>> = {
+  'relay-down': "Can't reach the relay. Retrying…",
+  'projector-off': "Projector offline. Presses won't reach it.",
+}
+
+/** The latest relay error; otherwise, while presses can't land, why not. The same in every layout. */
 export function Toast({ error, link }: { error: string | null; link: Link }) {
-  if (!error || link !== 'ready') return null
-  return <div className="toast" role="status">{error}</div>
+  const message = error ?? OFFLINE[link]
+  if (!message) return null
+  return <div className="toast" role="status" data-offline={!error || undefined}>{message}</div>
 }
 
 /** Tints a subtree with the app's colour (`--app`), the remote's way of saying which app is on. */

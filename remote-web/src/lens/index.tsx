@@ -34,7 +34,7 @@ export function Lens({ relay, openLayouts }: LayoutProps) {
       <WallTyping state={state} send={send} />
 
       <PlaybackRow state={state} send={send} />
-      <KeyRow send={send} />
+      <KeyRow state={state} send={send} />
     </main>
   )
 }

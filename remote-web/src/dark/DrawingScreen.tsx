@@ -17,6 +17,7 @@ type Props = {
 
 const TOOL_ICON: Record<InkTool, IconName> = { pen: 'pen', arrow: 'arrow', rect: 'rect', ellipse: 'ellipse', erase: 'eraser' }
 const TOOL_NAME: Record<InkTool, string> = { pen: 'Pen', arrow: 'Arrow', rect: 'Rectangle', ellipse: 'Ellipse', erase: 'Eraser' }
+const INK_NAME: Record<string, string> = { '#f4f4f4': 'White', '#f5a524': 'Amber', '#ff5c5c': 'Red', '#5b8cff': 'Blue', '#3ecf8e': 'Green' }
 
 /**
  * Drawing on the wall, the same in every layout: the wall fills the screen (sideways on a portrait
@@ -62,10 +63,10 @@ export function DrawingScreen({ draw, send, linked, appColor }: Props) {
           </button>
           <span className="ink-dots" data-idle={draw.tool === 'erase' || undefined}>
             {draw.inks.map((c) => (
-              <button key={c} className="ink-dot" aria-label={`Ink ${c}`} aria-pressed={draw.ink === c} style={{ background: c }} onClick={() => draw.setInk(c)} />
+              <button key={c} className="ink-dot" aria-label={`${INK_NAME[c] ?? c} ink`} aria-pressed={draw.ink === c} style={{ background: c }} onClick={() => draw.setInk(c)} />
             ))}
           </span>
-          <HoldButton label="Undo (hold to clear)" onTap={draw.undo} onHold={draw.clear}><Icon name="back" /></HoldButton>
+          <HoldButton label="Undo (hold to clear)" onTap={draw.undo} onHold={draw.clear}><Icon name="undo" /></HoldButton>
           <button className="ink-done" onClick={draw.stop}>Done</button>
         </nav>
       </div>
