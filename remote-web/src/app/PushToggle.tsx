@@ -22,7 +22,8 @@ async function turnOn() {
   const key = await (await fetch('/push/key')).text()
   const sub = current ?? (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }))
   const res = await fetch('/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) })
-  return res.ok
+  if (!res.ok) throw new Error(await res.text())
+  return true
 }
 
 async function turnOff() {
@@ -35,6 +36,7 @@ async function turnOff() {
 /** "Saved to the Shelf" notifications on this phone; tapping one puts the link on the wall. */
 export function PushToggle() {
   const [status, setStatus] = useState<Status>(() => (supported() ? 'busy' : 'unsupported'))
+  const [problem, setProblem] = useState<string | null>(null)
 
   useEffect(() => {
     if (!supported()) return
@@ -46,6 +48,7 @@ export function PushToggle() {
 
   const toggle = async () => {
     const was = status
+    setProblem(null)
     setStatus('busy')
     try {
       if (was === 'on') {
@@ -54,7 +57,8 @@ export function PushToggle() {
       } else {
         setStatus((await turnOn()) ? 'on' : Notification.permission === 'denied' ? 'blocked' : 'off')
       }
-    } catch {
+    } catch (e) {
+      setProblem(e instanceof Error ? e.message : String(e))
       setStatus(was)
     }
   }
@@ -65,7 +69,7 @@ export function PushToggle() {
       <span>
         <span className="layout-name">Shelf notifications</span>
         <span className="muted">
-          {status === 'blocked' ? 'Blocked in your phone’s settings' : 'Tap one to put the link on the wall'}
+          {problem ?? (status === 'blocked' ? 'Blocked in your phone’s settings' : 'Tap one to put the link on the wall')}
         </span>
       </span>
       <span className="push-state">{status === 'on' ? 'On' : 'Off'}</span>

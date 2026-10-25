@@ -55,8 +55,10 @@ fun Route.shareRoutes(execute: suspend (RemoteCommand) -> RelayEvent.Error?, sug
     }
     get("/push/key") { call.respondText(push.publicKey) }
     post("/push/subscribe") {
-        push.subscribe(call.receive<PushSubscription>())
-        call.respondText("ok")
+        when (val refusal = push.subscribe(call.receive<PushSubscription>())) {
+            null -> call.respondText("ok")
+            else -> call.respondText(refusal, status = HttpStatusCode.BadGateway)
+        }
     }
     post("/push/unsubscribe") {
         push.unsubscribe(call.receive<Unsubscribe>().endpoint)

@@ -38,9 +38,14 @@ class PushNotifier(private val file: File, private val subject: String) {
     /** What phones pass to `pushManager.subscribe` as `applicationServerKey`. */
     val publicKey: String get() = saved.publicKey
 
-    suspend fun subscribe(subscription: PushSubscription) = lock.withLock {
-        saved = saved.copy(subscriptions = saved.subscriptions.filter { it.endpoint != subscription.endpoint } + subscription)
-        save()
+    /** Saves it and sends a test notification at once; returns why the push service refused it, if it did. */
+    suspend fun subscribe(subscription: PushSubscription): String? {
+        lock.withLock {
+            saved = saved.copy(subscriptions = saved.subscriptions.filter { it.endpoint != subscription.endpoint } + subscription)
+            save()
+        }
+        val payload = protocolJson.encodeToString(Announcement.serializer(), Announcement(message = "Shelf notifications are on")).toByteArray()
+        return send(subscription, payload).refusal
     }
 
     suspend fun unsubscribe(endpoint: String) = lock.withLock {
@@ -49,13 +54,14 @@ class PushNotifier(private val file: File, private val subject: String) {
     }
 
     suspend fun announce(url: String) {
-        val payload = protocolJson.encodeToString(Announcement.serializer(), Announcement(url)).toByteArray()
-        val gone = lock.withLock { saved.subscriptions }.filter { !send(it, payload) }
+        val payload = protocolJson.encodeToString(Announcement.serializer(), Announcement(url = url)).toByteArray()
+        val gone = lock.withLock { saved.subscriptions }.filter { send(it, payload).gone }
         gone.forEach { unsubscribe(it.endpoint) }
     }
 
-    /** False only when the push service says the subscription no longer exists. */
-    private suspend fun send(subscription: PushSubscription, payload: ByteArray): Boolean = try {
+    private class Outcome(val refusal: String?, val gone: Boolean)
+
+    private suspend fun send(subscription: PushSubscription, payload: ByteArray): Outcome = try {
         val endpoint = URI(subscription.endpoint)
         val body = WebPushCrypto.encrypt(payload, WebPushCrypto.unb64(subscription.keys.p256dh), WebPushCrypto.unb64(subscription.keys.auth))
         val expires = System.currentTimeMillis() / 1000 + 12 * 60 * 60
@@ -69,14 +75,17 @@ class PushNotifier(private val file: File, private val subject: String) {
             .header("Urgency", "high")
             .POST(HttpRequest.BodyPublishers.ofByteArray(body))
             .build()
-        val status = http.sendAsync(request, HttpResponse.BodyHandlers.ofString()).await().let { response ->
-            if (response.statusCode() !in 200..299) log.warn("push to {} failed: {} {}", endpoint.host, response.statusCode(), response.body().take(200))
-            response.statusCode()
+        val response = http.sendAsync(request, HttpResponse.BodyHandlers.ofString()).await()
+        val status = response.statusCode()
+        if (status in 200..299) Outcome(null, false)
+        else {
+            val reason = "${endpoint.host} refused it: $status ${response.body().take(200)}".trim()
+            log.warn("push failed: {}", reason)
+            Outcome(reason, status == 404 || status == 410)
         }
-        status != 404 && status != 410
     } catch (e: Exception) {
         log.warn("push failed: {}", e.message)
-        true
+        Outcome("couldn't reach the push service: ${e.message}", false)
     }
 
     private fun load(): Saved {
@@ -100,5 +109,5 @@ class PushNotifier(private val file: File, private val subject: String) {
     private data class Saved(val privateKey: String, val publicKey: String, val subscriptions: List<PushSubscription> = emptyList())
 
     @Serializable
-    private data class Announcement(val url: String)
+    private data class Announcement(val url: String? = null, val message: String? = null)
 }

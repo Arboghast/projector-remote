@@ -5,8 +5,9 @@ self.addEventListener('fetch', () => {})
 // The relay announces each link saved to the Shelf; tapping the notification puts it on the wall
 // without opening the remote.
 self.addEventListener('push', (event) => {
-  const { url } = event.data?.json() ?? {}
-  if (!url) return
+  const { url, message } = event.data?.json() ?? {}
+  // iOS drops the subscription if a push shows nothing, so every push shows something.
+  if (!url) return event.waitUntil(self.registration.showNotification(message || 'Projector Remote', { icon: '/icon-192.png' }))
   event.waitUntil(self.registration.showNotification('Saved to the Shelf', {
     body: `Tap to show it now · ${url.replace(/^https?:\/\/(www\.)?/, '')}`,
     icon: '/icon-192.png',

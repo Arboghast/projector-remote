@@ -48,11 +48,12 @@ class PushNotifierTest {
     @Test
     fun `a phone can decrypt the announcement and verify who sent it`() = runBlocking {
         val notifier = PushNotifier(file, "mailto:a@b.example")
-        notifier.subscribe(subscription)
+        assertEquals(null, notifier.subscribe(subscription))
+        assertTrue("Shelf notifications are on" in String(decrypt(received.single().second)))
         notifier.announce("https://example.com/a")
 
-        val (headers, body) = received.single()
-        assertEquals("""{"url":"https://example.com/a"}""", String(decrypt(body)))
+        val (headers, body) = received.last()
+        assertTrue(""""url":"https://example.com/a"""" in String(decrypt(body)))
         assertEquals("aes128gcm", headers["Content-encoding"])
         val (token, key) = Regex("""vapid t=([^,]+), k=(.+)""").find(headers.getValue("Authorization"))!!.destructured
         assertEquals(notifier.publicKey, key)
@@ -76,7 +77,14 @@ class PushNotifierTest {
         second.announce("https://example.com/a")
         status = 201
         second.announce("https://example.com/b")
-        assertEquals(1, received.size)
+        assertEquals(2, received.size) // the test push on subscribe, then the refused one
+    }
+
+    @Test
+    fun `turning on reports why the push service refused`() = runBlocking {
+        status = 403
+        val refusal = PushNotifier(file, "mailto:a@b.example").subscribe(subscription)
+        assertTrue(refusal != null && "403" in refusal)
     }
 
     // The receiving side of RFC 8291, as a phone's browser does it.
