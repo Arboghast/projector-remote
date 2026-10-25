@@ -38,6 +38,19 @@ class AgentTest {
     }
 
     @Test
+    fun `a request glows from the moment it's asked until it's over, even if Claude says end`() = runTest {
+        val agent = Agent(backgroundScope) { testScheduler.currentTime }
+        agent.newTask()
+        assertTrue(agent.driving.value)
+        advanceTimeBy(Agent.IDLE_END_MS * 2)
+        runCurrent()
+        agent.end()
+        assertTrue(agent.driving.value)
+        agent.finishTask()
+        assertFalse(agent.driving.value)
+    }
+
+    @Test
     fun `stop holds until a new task, whatever Claude calls`() = runTest {
         val agent = Agent(backgroundScope) { testScheduler.currentTime }
         agent.beforeAction()

@@ -19,21 +19,27 @@
   color: var(--claude);
 }
 
+/* The prompt opens at the top, under the spark you tapped, and Claude's card then takes its place:
+   one spot from asking to answer, instead of jumping from the bottom of the screen to the top. */
 .ask-backdrop {
   position: fixed;
   inset: 0;
   z-index: 12;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  padding: 0 12px calc(env(safe-area-inset-bottom) + 12px);
-  background: rgb(0 0 0 / 0.55);
+  padding: max(44px, calc(env(safe-area-inset-top) + 32px)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  background: rgb(0 0 0 / 0.35);
   animation: fade 0.15s ease-out;
 }
 
 .ask-prompt {
   width: min(100%, 560px);
-  animation: rise 0.18s ease-out;
+  animation: drop 0.18s ease-out;
+}
+
+@keyframes drop {
+  from { transform: translateY(-8px); opacity: 0; }
 }
 
 .ask-field {
@@ -104,7 +110,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid color-mix(in srgb, var(--claude) 35%, var(--border));
-  animation: rise 0.18s ease-out;
+  animation: drop 0.18s ease-out;
 }
 
 .ask-card[data-phase='failed'] {
@@ -128,7 +134,8 @@
 .ask-summary {
   flex: 1;
   min-width: 0;
-  min-height: 48px;
+  /* Room for the request and two lines of progress, so the card doesn't grow and shrink as steps change. */
+  min-height: 56px;
   display: flex;
   align-items: center;
   gap: 10px;

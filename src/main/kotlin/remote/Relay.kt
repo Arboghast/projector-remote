@@ -6,6 +6,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.install
 import io.ktor.server.http.content.staticFiles
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -66,7 +67,7 @@ class Relay(
 
     /** The relay is going away: a request Claude is still on mustn't outlive it. */
     fun shutdown() {
-        if (::runner.isInitialized) runner.stop()
+        if (::runner.isInitialized) runner.shutdown()
     }
 
     private fun status() = RelayEvent.Status(shell.connected.value, shell.device)
@@ -150,6 +151,8 @@ class Relay(
 
     fun install(app: Application) = with(app) {
         runner = ClaudeRunner(config, agent, app, ::broadcast)
+        // After the routes are up, so the waiting Claude finds the projector's tools when it starts.
+        app.monitor.subscribe(ApplicationStarted) { runner.warm() }
         quirks = AppQuirks(sender, shell, { projector.state.value }, app)
         input.inUse = { hasRemotes || agent.driving.value }
         install(WebSockets) { pingPeriod = 15.seconds }

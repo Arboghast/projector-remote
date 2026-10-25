@@ -9,21 +9,34 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Whether Claude is driving the projector. Claude says so with start and end; any tool call also
- * counts as a start, and silence for [IDLE_END_MS] ends it, for when Claude was interrupted and
- * never got to say end. A person's Stop holds until a new task begins; Claude can't lift it.
+ * Whether Claude is driving the projector. A spoken request holds it from the moment it's asked
+ * until Claude finishes, whatever Claude does meanwhile (thinking, or working through adb). Without
+ * one, as for another MCP client, Claude says so with start and end; any tool call counts as a
+ * start, and silence for [IDLE_END_MS] ends it, for when Claude was interrupted. A person's Stop
+ * holds until a new task begins; Claude can't lift it.
  */
 class Agent(private val scope: CoroutineScope, private val now: () -> Long = System::currentTimeMillis) {
     private val _driving = MutableStateFlow(false)
     val driving: StateFlow<Boolean> = _driving.asStateFlow()
 
     @Volatile private var stopped = false
+    @Volatile private var holding = false
     @Volatile private var lastCall = 0L
     private var watchdog: Job? = null
 
-    /** A person asked for something new: an earlier Stop no longer applies. */
+    /** A person asked for something: the wall glows at once, and an earlier Stop no longer applies. */
+    @Synchronized
     fun newTask() {
         stopped = false
+        holding = true
+        mark()
+    }
+
+    /** The request is over, however it went. */
+    @Synchronized
+    fun finishTask() {
+        holding = false
+        release()
     }
 
     /** Every tool call except end goes through here first, so looking also keeps the glow up. */
@@ -32,17 +45,24 @@ class Agent(private val scope: CoroutineScope, private val now: () -> Long = Sys
         mark()
     }
 
+    /** Claude says it's done; during a request the glow stays until the request itself ends. */
     @Synchronized
     fun end() {
-        watchdog?.cancel()
-        watchdog = null
-        _driving.value = false
+        if (!holding) release()
     }
 
     /** A person pressed Stop: Claude's next call fails, and the glow goes now. */
+    @Synchronized
     fun stop() {
         stopped = true
-        end()
+        holding = false
+        release()
+    }
+
+    private fun release() {
+        watchdog?.cancel()
+        watchdog = null
+        _driving.value = false
     }
 
     @Synchronized
@@ -51,7 +71,7 @@ class Agent(private val scope: CoroutineScope, private val now: () -> Long = Sys
         if (watchdog?.isActive == true) return
         _driving.value = true
         watchdog = scope.launch {
-            while (now() - lastCall < IDLE_END_MS) delay(CHECK_MS)
+            while (holding || now() - lastCall < IDLE_END_MS) delay(CHECK_MS)
             _driving.value = false
         }
     }

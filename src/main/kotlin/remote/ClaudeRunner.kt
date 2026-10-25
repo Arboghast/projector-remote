@@ -31,6 +31,10 @@ class ClaudeRunner(
     @Volatile private var stopped = false
     private var job: Job? = null
     @Volatile private var runId = 0
+    // A Claude started ahead of time and waiting for its request: starting one takes seconds (more
+    // on a Pi), which otherwise all pass before anything happens on the wall.
+    private var spare: Process? = null
+    private var spareAt = 0L
     @Volatile private var latest: RelayEvent.Claude? = null
     @Volatile private var latestAt = 0L
 
@@ -51,12 +55,52 @@ class ClaudeRunner(
         job = scope.launch(Dispatchers.IO) { run(text) }
     }
 
-    /** A person pressed Stop (or the relay is shutting down): end the run, and with it the glow. */
+    /** A person pressed Stop: end the run, and with it the glow. */
     @Synchronized
     fun stop() {
         stopped = true
         agent.stop()
         process?.let(::kill)
+    }
+
+    /** The relay is going away: nothing Claude started may outlive it. */
+    @Synchronized
+    fun shutdown() {
+        stop()
+        spare?.let(::kill)
+        spare = null
+    }
+
+    /** Has a Claude ready for the next request. */
+    fun warm() {
+        scope.launch(Dispatchers.IO) {
+            runCatching { synchronized(this@ClaudeRunner) { if (spare == null) spare = spawn().also { spareAt = System.currentTimeMillis() } } }
+                .onFailure { log.warn("couldn't start a Claude ahead of time: {}", it.message) }
+        }
+    }
+
+    /** The waiting Claude if it's still alive and fresh, else a new one. */
+    @Synchronized
+    private fun takeProcess(): Process {
+        val ready = spare?.takeIf { it.isAlive && System.currentTimeMillis() - spareAt < SPARE_MAX_AGE_MS }
+        if (ready == null) spare?.let(::kill)
+        spare = null
+        return ready ?: spawn()
+    }
+
+    private fun spawn(): Process {
+        val dir = File(config.claudeDir).apply { mkdirs() }
+        val mcp = File(dir, "mcp.json").apply { writeText(mcpConfig(config.port)) }
+        val command = buildList {
+            addAll(listOf(config.claudeBin, "-p", "--output-format", "stream-json", "--verbose"))
+            addAll(listOf("--mcp-config", mcp.absolutePath, "--strict-mcp-config"))
+            addAll(listOf("--allowedTools", ALLOWED_TOOLS, "--append-system-prompt", instructions(config.device)))
+            config.claudeModel?.let { addAll(listOf("--model", it)) }
+        }
+        val builder = ProcessBuilder(command).directory(dir).redirectError(File(dir, ERRORS_FILE))
+        // Only what Claude needs: anything else in the relay's environment (keys, tokens) stays out of its shell.
+        builder.environment().keys.retainAll(PASSED_ENV)
+        return builder.start()
     }
 
     @Synchronized
@@ -88,26 +132,15 @@ class ClaudeRunner(
             RelayEvent.Claude("failed", "Couldn't start Claude: ${e.message}")
         } finally {
             synchronized(this) { process = null }
-            agent.end()
+            agent.finishTask()
         }
         publish(if (stopped) RelayEvent.Claude("stopped", "Stopped.") else outcome)
+        warm()
     }
 
     private suspend fun launchAndFollow(text: String): RelayEvent.Claude {
-        val dir = File(config.claudeDir).apply { mkdirs() }
-        val mcp = File(dir, "mcp.json").apply { writeText(mcpConfig(config.port)) }
-        val command = buildList {
-            addAll(listOf(config.claudeBin, "-p", "--output-format", "stream-json", "--verbose"))
-            addAll(listOf("--mcp-config", mcp.absolutePath, "--strict-mcp-config"))
-            addAll(listOf("--allowedTools", ALLOWED_TOOLS, "--append-system-prompt", instructions(config.device)))
-            config.claudeModel?.let { addAll(listOf("--model", it)) }
-        }
-        val errors = File(dir, "last-run.err")
         log.info("Claude asked: {}", text)
-        val builder = ProcessBuilder(command).directory(dir).redirectError(errors)
-        // Only what Claude needs: anything else in the relay's environment (keys, tokens) stays out of its shell.
-        builder.environment().keys.retainAll(PASSED_ENV)
-        val p = builder.start()
+        val p = takeProcess()
         started(p)
         var timedOut = false
         val watchdog = scope.launch(Dispatchers.IO) {
@@ -135,7 +168,8 @@ class ClaudeRunner(
             watchdog.cancel()
         }
         if (timedOut) return RelayEvent.Claude("failed", "That took too long, so Claude was stopped.")
-        return result ?: RelayEvent.Claude("failed", "Claude stopped without an answer: ${lastLine(errors) ?: "exit ${p.exitValue()}"}")
+        val why = lastLine(File(config.claudeDir, ERRORS_FILE)) ?: "exit ${p.exitValue()}"
+        return result ?: RelayEvent.Claude("failed", "Claude stopped without an answer: $why")
     }
 
     /** Every shell command Claude runs goes in the log, since it runs with the relay's rights. */
@@ -150,6 +184,8 @@ class ClaudeRunner(
         private const val MAX_REQUEST = 2_000
         private const val MAX_RUN_MINUTES = 6L
         private const val RECENT_MS = 30_000L
+        private const val SPARE_MAX_AGE_MS = 60 * 60_000L
+        private const val ERRORS_FILE = "last-run.err"
         private const val TOOL_RESULT_LINE = """{"type":"user""""
         private val PASSED_ENV = setOf(
             "PATH", "HOME", "LANG", "LC_ALL", "TERM", "TZ",
