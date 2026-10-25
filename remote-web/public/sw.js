@@ -2,6 +2,11 @@
 // passes every request through to the network.
 self.addEventListener('fetch', () => {})
 
+// Take over at once: otherwise a new version waits until every remote window is closed, which an
+// iPhone home-screen app almost never is, and taps keep reaching the old code.
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim().then(() => clientLog('sw activated'))))
+
 // The relay announces each link saved to the Shelf; tapping the notification puts it on the wall
 // without opening the remote.
 self.addEventListener('push', (event) => {
