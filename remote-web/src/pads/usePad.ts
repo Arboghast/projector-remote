@@ -13,15 +13,12 @@ export type PadHandlers = {
   onTwoFingerMove: (dx: number, dy: number) => void
   onTwoFingerTap: () => void
   onLongPress?: () => void
-  /** Three fingers swept sideways and lifted; 1 is rightward, -1 leftward. */
-  onThreeFingerSwipe?: (direction: 1 | -1) => void
 }
 
 const TAP_SLOP_PX = 10
 const TAP_MS = 250
 const LONG_PRESS_MS = 550
 const VELOCITY_WINDOW_MS = 80
-const SWIPE_PX = 60
 
 type Sample = { x: number; y: number; t: number }
 
@@ -29,7 +26,7 @@ export function usePad(handlers: PadHandlers) {
   const h = useRef(handlers)
   h.current = handlers
   const pointers = useRef(new Map<number, { x: number; y: number }>())
-  const s = useRef({ startX: 0, startY: 0, startT: 0, maxFingers: 0, moved: 0, last: { x: 0, y: 0 }, longFired: false, swipeX: 0, swipeY: 0 })
+  const s = useRef({ startX: 0, startY: 0, startT: 0, maxFingers: 0, moved: 0, last: { x: 0, y: 0 }, longFired: false })
   const samples = useRef<Sample[]>([])
   const longTimer = useRef<number | undefined>(undefined)
 
@@ -59,7 +56,7 @@ export function usePad(handlers: PadHandlers) {
     }
     const st = s.current
     if (pointers.current.size === 1) {
-      Object.assign(st, { startX: e.clientX, startY: e.clientY, startT: performance.now(), maxFingers: 1, moved: 0, last: { x: e.clientX, y: e.clientY }, longFired: false, swipeX: 0, swipeY: 0 })
+      Object.assign(st, { startX: e.clientX, startY: e.clientY, startT: performance.now(), maxFingers: 1, moved: 0, last: { x: e.clientX, y: e.clientY }, longFired: false })
       samples.current = [{ x: e.clientX, y: e.clientY, t: performance.now() }]
       window.clearTimeout(longTimer.current)
       longTimer.current = window.setTimeout(() => {
@@ -85,14 +82,6 @@ export function usePad(handlers: PadHandlers) {
     st.last = c
     if (dx === 0 && dy === 0) return
     st.moved = Math.max(st.moved, Math.hypot(c.x - st.startX, c.y - st.startY))
-    // Three fingers are a swipe, not a scroll: add up the sweep and act on it at lift-off.
-    if (st.maxFingers >= 3) {
-      if (pointers.current.size >= 3) {
-        st.swipeX += dx
-        st.swipeY += dy
-      }
-      return
-    }
     if (pointers.current.size > 1) {
       h.current.onTwoFingerMove(dx, dy)
       return
@@ -110,11 +99,6 @@ export function usePad(handlers: PadHandlers) {
     const st = s.current
     const quick = performance.now() - st.startT < TAP_MS + 100
     if (st.longFired) return
-    if (st.maxFingers >= 3) {
-      const sideways = Math.abs(st.swipeX) > SWIPE_PX && Math.abs(st.swipeX) > Math.abs(st.swipeY)
-      if (sideways) h.current.onThreeFingerSwipe?.(st.swipeX > 0 ? 1 : -1)
-      return
-    }
     if (st.maxFingers >= 2) {
       if (st.moved < TAP_SLOP_PX * 2 && quick) h.current.onTwoFingerTap()
       return

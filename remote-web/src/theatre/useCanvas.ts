@@ -75,7 +75,7 @@ export function useCanvas(send: (command: RemoteCommand) => void, edges: EdgeHan
     return () => window.removeEventListener('resize', measure)
   }, [])
 
-  const pad = useCursorPad(send, true, true)
+  const pad = useCursorPad(send, true)
 
   // The pad already has the touch (so a long press is timed from when it began); it just hasn't seen moves.
   const toPad = () => {

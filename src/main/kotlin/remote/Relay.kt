@@ -81,7 +81,6 @@ class Relay(
             is RelayCommand.Ink, is RelayCommand.InkClear, is RelayCommand.InkUndo ->
                 overlay.send(protocolJson.encodeToString(RemoteCommand.serializer(), command))
             is RelayCommand.PlayerSettings -> quirks.playerSettings()
-            is RelayCommand.BrowserForward -> quirks.browserForward()
             is RelayCommand.Pointer -> cursor(input.mouseMove(command.dx, command.dy))
             is RelayCommand.Click -> cursor(input.mouseClick())
             is RelayCommand.ShelfAdd -> addToShelf(command.url, command.from)

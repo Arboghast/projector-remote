@@ -25,7 +25,6 @@ export type RemoteCommand =
   | { type: 'draw' }
   | { type: 'draw-end' }
   | { type: 'player-settings' }
-  | { type: 'browser-forward' }
   | { type: 'ink'; id: string; points: [number, number][]; color: string; size: number; tool: InkTool }
   | { type: 'ink-clear' }
   | { type: 'ink-undo' }
