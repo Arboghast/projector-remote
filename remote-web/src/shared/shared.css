@@ -435,6 +435,28 @@
   text-overflow: ellipsis;
 }
 
+.shelf-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+
+.shelf-recent-title {
+  margin: 4px 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Already seen: present but receding behind what's still waiting. */
+.shelf-recent .shelf-face {
+  background: transparent;
+  opacity: 0.75;
+}
+
 .shelf-empty {
   margin: 0;
   padding: 28px 12px;

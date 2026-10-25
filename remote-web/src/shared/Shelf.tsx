@@ -25,6 +25,19 @@ export function ShelfList({ items, send, compact, empty = 'Nothing waiting. Shar
   )
 }
 
+/** Links already shown on the wall, quieter than the waiting ones; they swipe the same way, to show again or forget. */
+export function RecentList({ items, send }: Pick<Props, 'items' | 'send'>) {
+  if (items.length === 0) return null
+  return (
+    <section className="shelf-recent" aria-label="Recently shown">
+      <h3 className="shelf-recent-title">Recent</h3>
+      <ul className="shelf-list shelf-compact">
+        {items.map((item) => <ShelfCard key={item.id} item={item} send={send} />)}
+      </ul>
+    </section>
+  )
+}
+
 function ShelfCard({ item, send }: { item: ShelfItem; send: Props['send'] }) {
   const app = appInfo(item.app)
   const label = linkLabel(item.url)

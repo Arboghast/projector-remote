@@ -22,6 +22,7 @@ fun main() {
             screen = ScreenCapture(shell),
             stream = ScreenStream(scrcpy, shell, this),
             overlay = InkOverlay(shell, File(config.inkOverlayApk)),
+            push = PushNotifier(File(config.pushFile), config.pushContact),
             agent = Agent(this),
             config = config,
             webDir = File(config.webDir),

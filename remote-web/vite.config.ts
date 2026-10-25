@@ -19,6 +19,7 @@ export default defineConfig({
       '/suggest': RELAY,
       '/share': RELAY,
       '/shelf': RELAY,
+      '/push': RELAY,
       '/health': RELAY,
     },
   },

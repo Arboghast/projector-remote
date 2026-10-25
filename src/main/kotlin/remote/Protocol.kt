@@ -165,7 +165,7 @@ sealed interface RelayEvent {
     data class State(val state: ProjectorState) : RelayEvent
 
     @Serializable @SerialName("shelf")
-    data class Shelf(val items: List<ShelfItem>) : RelayEvent
+    data class Shelf(val items: List<ShelfItem>, val recent: List<ShelfItem>) : RelayEvent
 
     /**
      * Claude's progress on a request. [phase] is working, done, failed or stopped; while working,

@@ -2,7 +2,9 @@ package remote
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.contentType
+import io.ktor.server.request.receive
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -10,20 +12,24 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import java.net.URLDecoder
 
 /**
  * Links arriving from outside the remote: `/share` opens one now; `/shelf` (iOS Shortcut, browser
  * extension) and `/share-target` (Android share sheet, bookmark) save it for later; `/suggest`
- * offers searches as you type.
+ * offers searches as you type. Each saved link is announced to phones with notifications on; the `/push` routes
+ * turns them on and off.
  */
-fun Route.shareRoutes(execute: suspend (RemoteCommand) -> RelayEvent.Error?, suggestions: Suggestions) {
+fun Route.shareRoutes(execute: suspend (RemoteCommand) -> RelayEvent.Error?, suggestions: Suggestions, shelf: ShelfStore, push: PushNotifier) {
     get("/share") { share(execute, call.parameters["url"] ?: call.parameters["text"]) }
     post("/share") { share(execute, body()) }
     get("/share-target") {
         val p = call.parameters
         val raw = listOfNotNull(p["url"], p["text"], p["title"]).joinToString(" ")
         val error = execute(RelayCommand.ShelfAdd(raw, p["from"] ?: deviceFrom(call.request.headers["User-Agent"])))
+        if (error == null) call.announce(push, raw)
         call.respondText(sharedPage(if (error == null) extractUrl(raw) else null, error?.message), ContentType.Text.Html)
     }
     get("/suggest") { call.respond(suggestions.forText(call.parameters["q"].orEmpty())) }
@@ -31,10 +37,42 @@ fun Route.shareRoutes(execute: suspend (RemoteCommand) -> RelayEvent.Error?, sug
         val body = body()
         when (val error = execute(RelayCommand.ShelfAdd(body, call.parameters["from"] ?: "Shortcut"))) {
             // The Shortcut shows this text as its notification, so name what was saved.
-            null -> call.respondText("Saved to the Shelf: ${extractUrl(body)}")
+            null -> {
+                call.announce(push, body)
+                call.respondText("Saved to the Shelf: ${extractUrl(body)}")
+            }
             else -> call.respondText(error.message, status = HttpStatusCode.BadRequest)
         }
     }
+    // Clicking the "Saved" notification: the link just saved goes on the wall and leaves the Shelf.
+    post("/shelf/project") {
+        val url = extractUrl(body()) ?: return@post call.respondText("no link found", status = HttpStatusCode.BadRequest)
+        val saved = shelf.items.value.firstOrNull { it.url == url }
+        when (val error = execute(if (saved != null) RelayCommand.ShelfProject(saved.id) else ProjectorCommand.Open(url))) {
+            null -> call.respondText("On the wall: $url")
+            else -> call.respondText(error.message, status = HttpStatusCode.BadGateway)
+        }
+    }
+    get("/push/key") { call.respondText(push.publicKey) }
+    post("/push/subscribe") {
+        when (val refusal = push.subscribe(call.receive<PushSubscription>())) {
+            null -> call.respondText("ok")
+            else -> call.respondText(refusal, status = HttpStatusCode.BadGateway)
+        }
+    }
+    post("/push/unsubscribe") {
+        push.unsubscribe(call.receive<Unsubscribe>().endpoint)
+        call.respondText("ok")
+    }
+}
+
+@Serializable
+private data class Unsubscribe(val endpoint: String)
+
+// In the background: the share sheet or Shortcut shouldn't wait on Apple's or Google's push service.
+private fun ApplicationCall.announce(push: PushNotifier, raw: String) {
+    val url = extractUrl(raw) ?: return
+    application.launch { push.announce(url) }
 }
 
 private suspend fun RoutingContext.body(): String =

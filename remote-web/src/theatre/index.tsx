@@ -6,7 +6,7 @@ import { appInfo } from '../shared/apps'
 import { appStyle, CornerBar } from '../shared/chrome'
 import { LiveScreen } from '../shared/LiveScreen'
 import { Composer } from '../shared/Composer'
-import { ShelfList } from '../shared/Shelf'
+import { RecentList, ShelfList } from '../shared/Shelf'
 import { WallTyping } from '../shared/TextEntry'
 import { ControlSheet } from './ControlSheet'
 import { EdgePanel } from './EdgePanel'
@@ -28,7 +28,7 @@ const FULL_SHEET_PX = 190
  * right = the Shelf. Panels stay until you put them away.
  */
 export function Theatre({ relay, openLayouts }: LayoutProps) {
-  const { link, state, shelf, send } = relay
+  const { link, state, shelf, recent, send } = relay
   const [open, setOpen] = useState<Panel | null>(null)
   const [drag, setDrag] = useState<Drag | null>(null)
   const trails = useRef<Feedback>(null)
@@ -105,6 +105,7 @@ export function Theatre({ relay, openLayouts }: LayoutProps) {
         <h2 className="drawer-title">Shelf</h2>
         <Composer send={send} newestUrl={shelf[0]?.url} />
         <ShelfList items={shelf} send={send} compact empty="Nothing waiting. Share a link to Remote from any app to save it here." />
+        <RecentList items={recent} send={send} />
       </EdgePanel>
 
       <EdgePanel edge="bottom" shown={shown('sheet')} open={sheetLevel === 'full'} glance={sheetLevel === 'glance'} onClose={close}>

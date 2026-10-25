@@ -58,7 +58,7 @@ export type RelayEvent =
   | { type: 'status'; connected: boolean; device: string }
   | { type: 'error'; message: string }
   | { type: 'state'; state: ProjectorState }
-  | { type: 'shelf'; items: ShelfItem[] }
+  | { type: 'shelf'; items: ShelfItem[]; recent: ShelfItem[] }
   | ClaudeEvent
 
 /** Claude's progress on a spoken request; `kind` says what a working update's text is. */

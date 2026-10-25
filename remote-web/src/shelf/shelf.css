@@ -18,8 +18,18 @@
   gap: 14px;
 }
 
-.shelf-main .shelf-list {
+/* Waiting and Recent scroll together, so the composer below stays put. */
+.shelf-lists {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shelf-lists .shelf-list {
+  overflow: visible;
 }
 
 .shelf-heading {

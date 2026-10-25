@@ -36,5 +36,6 @@ COPY tools/ink-overlay.apk tools/
 ENV HOST=0.0.0.0 \
     WEB_DIR=/app/web \
     SHELF_FILE=/data/shelf.json \
-    CLAUDE_DIR=/data/claude
+    CLAUDE_DIR=/data/claude \
+    PUSH_FILE=/data/push.json
 CMD ["bin/projector-remote"]
