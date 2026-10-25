@@ -8,7 +8,7 @@ import { useFrameBatch, usePad } from './usePad'
  * acceleration (slow moves are precise, fast ones cross the wall), tap clicks, two fingers scroll,
  * a two-finger tap is Back and a long press is Menu.
  */
-export function useCursorPad(send: (command: RemoteCommand) => void, haptics = false) {
+export function useCursorPad(send: (command: RemoteCommand) => void, haptics = false, swipeBack = false) {
   const speed = useRef(0)
   const buzz = (ms: number) => {
     if (haptics) navigator.vibrate?.(ms)
@@ -38,5 +38,12 @@ export function useCursorPad(send: (command: RemoteCommand) => void, haptics = f
       send({ type: 'key', key: 'menu' })
       buzz(15)
     },
+    // Right goes back a page in the browser's tab (plain Back in other apps); left goes forward.
+    onThreeFingerSwipe: swipeBack
+      ? (direction) => {
+          send(direction === 1 ? { type: 'key', key: 'back' } : { type: 'browser-forward' })
+          buzz(15)
+        }
+      : undefined,
   })
 }

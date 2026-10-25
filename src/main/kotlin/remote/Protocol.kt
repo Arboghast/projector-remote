@@ -109,6 +109,10 @@ sealed interface RelayCommand : RemoteCommand {
     @Serializable @SerialName("player-settings")
     data object PlayerSettings : RelayCommand
 
+    /** Forward a page in the browser's tab; does nothing outside TV Bro. */
+    @Serializable @SerialName("browser-forward")
+    data object BrowserForward : RelayCommand
+
     @Serializable @SerialName("ink-clear")
     data object InkClear : RelayCommand
 

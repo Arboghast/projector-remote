@@ -25,10 +25,17 @@ class AppQuirks(
     fun handlesBack(): Boolean = state().let { it.app == Packages.TV_BRO && !it.keyboard }
 
     /** Opening TV Bro's bar, pressing its ← and closing the bar again goes back a page. */
-    fun browserBack() = run {
+    fun browserBack() = barButton(TV_BRO_BACK_X)
+
+    /** The same through the bar's →; outside TV Bro there's no page history to step through. */
+    fun browserForward() {
+        if (handlesBack()) barButton(TV_BRO_FORWARD_X)
+    }
+
+    private fun barButton(x: Double) = run {
         sender.press(RemoteKey.Back)
         delay(MENU_OPEN_MS)
-        sender.deliver(ProjectorCommand.Tap(TV_BRO_BACK_X, TV_BRO_BACK_Y))
+        sender.deliver(ProjectorCommand.Tap(x, TV_BRO_BAR_Y))
         delay(PAGE_BACK_MS)
         sender.press(RemoteKey.Back)
     }
@@ -79,9 +86,10 @@ class AppQuirks(
     }
 
     private companion object {
-        // The ← in TV Bro's bottom bar, as a fraction of the screen.
+        // The ← and → in TV Bro's bottom bar, as a fraction of the screen (TV Bro 2.1.6, 1920x1080).
         const val TV_BRO_BACK_X = 0.403
-        const val TV_BRO_BACK_Y = 0.954
+        const val TV_BRO_FORWARD_X = 0.453
+        const val TV_BRO_BAR_Y = 0.954
         const val MENU_OPEN_MS = 900L
         const val PAGE_BACK_MS = 500L
         const val CONTROLS_SHOW_MS = 700L
