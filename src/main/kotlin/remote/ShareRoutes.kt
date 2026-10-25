@@ -14,7 +14,10 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
 import java.net.URLDecoder
+
+private val phoneLog = LoggerFactory.getLogger("remote.Phone")
 
 /**
  * Links arriving from outside the remote: `/share` opens one now; `/shelf` (iOS Shortcut, browser
@@ -52,6 +55,11 @@ fun Route.shareRoutes(execute: suspend (RemoteCommand) -> RelayEvent.Error?, sug
             null -> call.respondText("On the wall: $url")
             else -> call.respondText(error.message, status = HttpStatusCode.BadGateway)
         }
+    }
+    // What a phone's notification tap did, step by step: an iPhone can't be inspected from here.
+    post("/client-log") {
+        phoneLog.info("phone {}: {}", deviceFrom(call.request.headers["User-Agent"]), call.receiveText().take(300))
+        call.respondText("ok")
     }
     get("/push/key") { call.respondText(push.publicKey) }
     post("/push/subscribe") {

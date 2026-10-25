@@ -3,6 +3,11 @@ import type { Link } from '../relay'
 
 const RETRY_MS = 1500
 
+// Temporary: reports each step to the relay's log while the iPhone path is being diagnosed.
+function clientLog(message: string) {
+  fetch('/client-log', { method: 'POST', body: message, keepalive: true }).catch(() => {})
+}
+
 /**
  * A tapped "Saved to the Shelf" notification on an iPhone opens the remote at `/?project=<link>`;
  * the link goes on the wall as soon as the projector is reachable (a woken phone's VPN can take a
@@ -16,11 +21,23 @@ export function useProjectFromNotification(link: Link) {
     const onMessage = (e: MessageEvent<unknown>) => {
       const data = e.data
       if (typeof data === 'object' && data !== null && 'type' in data && data.type === 'project' && 'url' in data && typeof data.url === 'string') {
+        clientLog('app: got the link from the service worker')
         setPending(data.url)
       }
     }
     navigator.serviceWorker?.addEventListener('message', onMessage)
     return () => navigator.serviceWorker?.removeEventListener('message', onMessage)
+  }, [])
+
+  useEffect(() => {
+    if (pending) clientLog(`app: pending link, relay link is ${link}`)
+  }, [pending, link])
+
+  useEffect(() => {
+    clientLog(`app: loaded ${location.search || '(no query)'}, sw ${navigator.serviceWorker?.controller ? 'controls' : 'does not control'} the page`)
+    const onVisible = () => clientLog(`app: ${document.visibilityState}`)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   useEffect(() => {
@@ -34,10 +51,11 @@ export function useProjectFromNotification(link: Link) {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: 'url=' + encodeURIComponent(pending),
         })
+        clientLog(`app: project answered ${res.status}`)
         // A refusal (say, the link won't open) is reported by the relay; retrying won't change it.
         if (res.ok || res.status < 500) return done()
-      } catch {
-        // Not reachable yet: try again.
+      } catch (e) {
+        clientLog(`app: project failed: ${e}`)
       }
       if (!stopped) timer = window.setTimeout(attempt, RETRY_MS)
     }

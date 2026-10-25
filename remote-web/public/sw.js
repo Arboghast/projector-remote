@@ -20,6 +20,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = event.notification.data?.url
   if (!url) return
+  clientLog(`sw notificationclick ${navigator.userAgent.slice(0, 60)}`)
   // iOS always opens the app on a tap and cuts this worker's request short, so there the app
   // projects the link once it's connected; Android can do it in the background.
   if (/iPhone|iPad/.test(navigator.userAgent)) return event.waitUntil(projectInApp(url))
@@ -28,10 +29,20 @@ self.addEventListener('notificationclick', (event) => {
 
 // An open remote only gets focused by openWindow, not reloaded, so it's told by message instead.
 async function projectInApp(url) {
-  const [open] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-  if (!open) return self.clients.openWindow('/?project=' + encodeURIComponent(url))
+  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  clientLog(`sw tap: ${windows.length} window(s) ${windows.map((w) => w.url).join(' ')}`)
+  const [open] = windows
+  if (!open) {
+    const opened = await self.clients.openWindow('/?project=' + encodeURIComponent(url)).catch((e) => clientLog(`sw openWindow failed: ${e}`))
+    return clientLog(`sw opened: ${opened ? opened.url : 'null'}`)
+  }
   open.postMessage({ type: 'project', url })
-  await open.focus().catch(() => {})
+  await open.focus().catch((e) => clientLog(`sw focus failed: ${e}`))
+  clientLog('sw messaged the open window')
+}
+
+function clientLog(message) {
+  return fetch('/client-log', { method: 'POST', body: message, keepalive: true }).catch(() => {})
 }
 
 const ATTEMPTS = 3
