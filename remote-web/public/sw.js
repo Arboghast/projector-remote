@@ -27,10 +27,9 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url ?? event.notification.tag
   event.waitUntil(clientLog(`sw notificationclick data=${JSON.stringify(event.notification.data ?? null)} tag=${event.notification.tag}`))
   if (!url) return
-  // iOS always opens the app on a tap and cuts this worker's request short, so there the app
-  // projects the link once it's connected; Android can do it in the background.
-  if (/iPhone|iPad/.test(navigator.userAgent)) return event.waitUntil(projectInApp(url))
-  event.waitUntil(project(url))
+  // The tap takes you to the remote, which projects the link once it's connected (and iOS would
+  // cut a request from this worker short anyway).
+  event.waitUntil(projectInApp(url))
 })
 
 // An open remote only gets focused by openWindow, not reloaded, so it's told by message instead.
@@ -49,29 +48,4 @@ async function projectInApp(url) {
 
 function clientLog(message) {
   return fetch('/client-log', { method: 'POST', body: message, keepalive: true }).catch(() => {})
-}
-
-const ATTEMPTS = 3
-const RETRY_MS = 1500
-
-// A phone just woken by the tap may still be reconnecting Wi-Fi or Tailscale.
-async function project(url) {
-  for (let i = 1; i <= ATTEMPTS; i++) {
-    try {
-      const res = await fetch('/shelf/project', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'url=' + encodeURIComponent(url),
-      })
-      if (res.ok) return
-      if (res.status < 500 || i === ATTEMPTS) {
-        return self.registration.showNotification("Couldn't show it", { body: await res.text(), icon: '/icon-192.png' })
-      }
-    } catch {
-      if (i === ATTEMPTS) {
-        return self.registration.showNotification("Couldn't reach the projector", { body: 'Check the Wi-Fi or Tailscale, then try again from the Shelf.', icon: '/icon-192.png' })
-      }
-    }
-    await new Promise((r) => setTimeout(r, RETRY_MS))
-  }
 }

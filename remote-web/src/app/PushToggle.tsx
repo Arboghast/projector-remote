@@ -16,21 +16,61 @@ function keyBytes(base64url: string) {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0))
 }
 
-async function turnOn() {
-  if ((await Notification.requestPermission()) !== 'granted') return false
+// Set when you turn notifications off here, so allowing them in the phone's settings doesn't
+// switch them back on at the next load.
+const OPTED_OUT_KEY = 'remote.push-off'
+
+function setOptedOut(off: boolean) {
+  try {
+    if (off) localStorage.setItem(OPTED_OUT_KEY, '1')
+    else localStorage.removeItem(OPTED_OUT_KEY)
+  } catch {
+    // Private mode: the choice isn't remembered.
+  }
+}
+
+function optedOut() {
+  try {
+    return localStorage.getItem(OPTED_OUT_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+async function register() {
   const { registration, current } = await subscription()
   const key = await (await fetch('/push/key')).text()
   const sub = current ?? (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }))
   const res = await fetch('/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) })
   if (!res.ok) throw new Error(await res.text())
+}
+
+async function turnOn() {
+  if ((await Notification.requestPermission()) !== 'granted') return false
+  await register()
+  setOptedOut(false)
   return true
 }
 
 async function turnOff() {
+  setOptedOut(true)
   const { current } = await subscription()
   if (!current) return
   await fetch('/push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: current.endpoint }) })
   await current.unsubscribe()
+}
+
+/**
+ * Notifications allowed in the phone's settings but never switched on here: subscribe on load, since
+ * allowing them is the whole intent and the toggle is easy to miss.
+ */
+export function useAutoSubscribe() {
+  useEffect(() => {
+    if (!supported() || Notification.permission !== 'granted' || optedOut()) return
+    subscription()
+      .then(({ current }) => (current ? undefined : register()))
+      .catch(() => {})
+  }, [])
 }
 
 /** "Saved to the Shelf" notifications on this phone; tapping one puts the link on the wall. */

@@ -9,7 +9,7 @@ import { Shelf } from '../shelf'
 import { Dark } from '../dark'
 import { Pads } from '../pads'
 import { Theatre } from '../theatre'
-import { PushToggle } from './PushToggle'
+import { PushToggle, useAutoSubscribe } from './PushToggle'
 import { useProjectFromNotification } from './useProjectFromNotification'
 import './app.css'
 
@@ -49,6 +49,7 @@ export function App() {
   const [choosing, setChoosing] = useState(false)
   useWakeLock()
   useProjectFromNotification(relay.link)
+  useAutoSubscribe()
 
   const choose = (id: LayoutId) => {
     setLayoutId(id)

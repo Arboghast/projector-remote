@@ -108,14 +108,17 @@ internal fun deviceFrom(userAgent: String?) = when {
 }
 
 /**
- * What a share lands on: a brief "Saved" that closes itself, so the share sheet hands you back to
- * the app you shared from instead of leaving you in the remote.
+ * What a share lands on: a success closes at once, so the share sheet hands you back to the app you
+ * shared from and the "Saved" notification does the confirming. Only if the browser refuses to close
+ * the window does the "Saved" text appear.
  */
 internal fun sharedPage(url: String?, error: String?): String {
     fun esc(t: String) = t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
     val title = if (error == null) "Saved to the Shelf" else "Couldn't save"
     val detail = esc(url ?: error ?: "")
-    val close = if (error == null) "<script>setTimeout(function(){window.close()},900)</script>" else ""
+    val close = if (error == null) {
+        "<style>main{visibility:hidden}</style><script>window.close();setTimeout(function(){document.querySelector('main').style.visibility='visible'},400)</script>"
+    } else ""
     return """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
         |<meta name="theme-color" content="#000000"><title>$title</title>
         |<style>html,body{margin:0;height:100%;background:#000;color:#eceef2;font:16px system-ui,sans-serif}

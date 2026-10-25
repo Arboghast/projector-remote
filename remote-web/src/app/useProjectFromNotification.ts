@@ -9,7 +9,7 @@ function clientLog(message: string) {
 }
 
 /**
- * A tapped "Saved to the Shelf" notification on an iPhone opens the remote at `/?project=<link>`;
+ * A tapped "Saved to the Shelf" notification opens the remote at `/?project=<link>`;
  * the link goes on the wall as soon as the projector is reachable (a woken phone's VPN can take a
  * moment), then the address is put back so a reload doesn't project it again.
  */
