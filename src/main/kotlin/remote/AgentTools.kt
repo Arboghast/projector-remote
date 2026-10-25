@@ -34,6 +34,12 @@ interface AgentShow {
 
     /** Clears the cursor and caption, so a screenshot shows the wall rather than Claude's marks. */
     fun quiet()
+
+    /** An address bar on the wall types the link out, so opening it reads as navigating, not a jump. */
+    fun url(url: String)
+
+    /** A sweep in the direction the page is moving. */
+    fun scroll(direction: String)
 }
 
 /**
@@ -181,7 +187,7 @@ class AgentTools(
                 "right" -> Triple(amount * Wall.WIDTH, 0.0, RemoteKey.Right)
                 else -> throw ToolFailure("direction must be up, down, left or right")
             }
-            show.say("Scrolling $direction")
+            show.scroll(direction)
             if (state().app in Packages.BROWSERS) {
                 act(ProjectorCommand.Scroll(dx.roundToInt(), dy.roundToInt()))
             } else {
@@ -201,7 +207,9 @@ class AgentTools(
             agent.beforeAction()
             val given = args.string("url")
             val url = extractUrl(given) ?: throw ToolFailure("not a link: $given")
-            show.say("Opening ${runCatching { URI(url).host.removePrefix("www.") }.getOrNull() ?: url}")
+            // The address bar types the link out first; the page opens once it's "entered".
+            show.url(url)
+            delay(minOf(url.length * URL_CHAR_MS, URL_TYPE_MAX_MS) + URL_ENTER_MS)
             act(ProjectorCommand.Open(url))
             text("Opening $url.")
         },
@@ -364,6 +372,10 @@ class AgentTools(
         private const val DUMP_TIMEOUT_S = 8L
         private const val VISIBLE_SAMPLE = 20
         private const val QUIET_MS = 200L
+        // Matches the overlay's typing speed (AgentView.URL_CHAR_MS, URL_TYPE_MAX_MS).
+        private const val URL_CHAR_MS = 30L
+        private const val URL_TYPE_MAX_MS = 1200L
+        private const val URL_ENTER_MS = 250L
         private const val MAX_PAGE_BYTES = 2_000_000
 
         private val KEY_LABELS = mapOf(

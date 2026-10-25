@@ -16,6 +16,7 @@ const paths = {
   layouts: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
   close: 'M6 6l12 12M18 6L6 18',
   up: 'M6 15l6-6 6 6',
+  down: 'M6 9l6 6 6-6',
   send: 'M5 12h14M13 6l6 6-6 6',
   link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
   shelf: 'M4 7h16M4 12h16M4 17h10',

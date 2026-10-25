@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 type Recognition = {
   lang: string
   interimResults: boolean
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null
   onend: (() => void) | null
   onerror: ((e: { error: string }) => void) | null
   start: () => void
@@ -39,8 +39,11 @@ function voiceProblem(error: string): string | null {
   }
 }
 
-/** Dictation on the phone itself; the projector only ever receives the finished text. */
-export function useVoice(onText: (text: string) => void) {
+/**
+ * Dictation on the phone itself; the projector only ever receives the finished text. With
+ * [onHearing], the words come through as they're spoken too, so you can see what's being heard.
+ */
+export function useVoice(onText: (text: string) => void, onHearing?: (text: string) => void) {
   // Phones only allow the microphone on https pages; on the plain-http Wi-Fi address the button would never
   // work, so it isn't offered (the keyboard's own mic still is).
   const supported = window.isSecureContext && recognitionCtor() !== undefined
@@ -49,6 +52,8 @@ export function useVoice(onText: (text: string) => void) {
   const [problem, setProblem] = useState<string | null>(null)
   const onTextRef = useRef(onText)
   onTextRef.current = onText
+  const onHearingRef = useRef(onHearing)
+  onHearingRef.current = onHearing
 
   // Leaving drops whatever was being heard rather than acting on it.
   useEffect(() => () => cancelRec(active.current), [])
@@ -68,12 +73,14 @@ export function useVoice(onText: (text: string) => void) {
     if (!Ctor) return
     const rec = new Ctor()
     rec.lang = navigator.language
-    rec.interimResults = false
+    rec.interimResults = onHearingRef.current !== undefined
     // iOS can report one utterance more than once; only the first counts.
     let heard = false
     rec.onresult = (e) => {
-      const transcript = Array.from(e.results).map((r) => r[0]?.transcript ?? '').join(' ').trim()
+      const results = Array.from(e.results)
+      const transcript = results.map((r) => r[0]?.transcript ?? '').join(' ').trim()
       if (!transcript || heard) return
+      if (!results.every((r) => r.isFinal)) return onHearingRef.current?.(transcript)
       heard = true
       rec.stop()
       onTextRef.current(transcript)

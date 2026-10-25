@@ -44,4 +44,9 @@ class ClaudeRunnerTest {
     fun `the MCP config points Claude at this relay`() {
         assertTrue("http://127.0.0.1:8790/mcp" in ClaudeRunner.mcpConfig(8790))
     }
+
+    @Test
+    fun `markdown marks are taken out of what the phone shows`() {
+        assertEquals("It's Sunday, checked with date.", plain("It's **Sunday**, checked with `date`.  "))
+    }
 }

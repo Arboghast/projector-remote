@@ -175,6 +175,23 @@
   -webkit-box-orient: vertical;
 }
 
+/* How many steps there are to read, and that tapping shows them. */
+.ask-count {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px 2px 8px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ask-field input[data-hearing] {
+  color: var(--claude);
+}
+
 .ask-stop {
   color: var(--text);
 }

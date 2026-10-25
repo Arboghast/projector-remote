@@ -25,7 +25,7 @@ function useAsk(): Ask {
   return ask
 }
 
-const ANSWER_SHOWN_MS = 9000
+const ANSWER_SHOWN_MS = 15000
 
 /**
  * Asking Claude to do something on the projector, from any layout: the spark opens a prompt and
@@ -34,6 +34,7 @@ const ANSWER_SHOWN_MS = 9000
  */
 export function ClaudeProvider({ relay, children }: { relay: Relay; children: ReactNode }) {
   const [asking, setAsking] = useState(false)
+  const [hearing, setHearing] = useState('')
   const [expandedRun, setExpandedRun] = useState<number | null>(null)
   const [dismissedRun, setDismissedRun] = useState<number | null>(null)
   const run = relay.claude
@@ -43,12 +44,14 @@ export function ClaudeProvider({ relay, children }: { relay: Relay; children: Re
     if (!request.trim()) return
     relay.send({ type: 'ask', text: request.trim() })
     setAsking(false)
+    setHearing('')
   }
-  const voice = useVoice(submit)
+  const voice = useVoice(submit, setHearing)
 
   const spark = () => {
     if (busy && run) return setExpandedRun(run.id)
     setAsking(true)
+    setHearing('')
     if (voice.supported && !voice.listening) voice.toggle()
   }
   // Putting the prompt away drops whatever was being heard: it mustn't go off as a request.
@@ -72,7 +75,7 @@ export function ClaudeProvider({ relay, children }: { relay: Relay; children: Re
   return (
     <AskContext.Provider value={ask}>
       {children}
-      {asking && <AskPrompt voice={voice} onSubmit={submit} onClose={close} />}
+      {asking && <AskPrompt voice={voice} hearing={hearing} onSubmit={submit} onClose={close} />}
     </AskContext.Provider>
   )
 }
@@ -89,7 +92,7 @@ export function AskButton() {
 
 type Voice = ReturnType<typeof useVoice>
 
-function AskPrompt({ voice, onSubmit, onClose }: { voice: Voice; onSubmit: (text: string) => void; onClose: () => void }) {
+function AskPrompt({ voice, hearing, onSubmit, onClose }: { voice: Voice; hearing: string; onSubmit: (text: string) => void; onClose: () => void }) {
   const [text, setText] = useState('')
 
   useEffect(() => {
@@ -115,7 +118,9 @@ function AskPrompt({ voice, onSubmit, onClose }: { voice: Voice; onSubmit: (text
         <div className="ask-field">
           <span className="ask-mark"><Icon name="spark" size={18} /></span>
           <input
-            value={text}
+            // While listening, the field shows the words as they're heard.
+            value={text || (voice.listening ? hearing : '')}
+            data-hearing={!text && voice.listening && hearing ? true : undefined}
             onChange={(e) => type(e.target.value)}
             aria-label="What Claude should do"
             placeholder={voice.problem ?? (voice.listening ? 'Listening…' : 'What should Claude do?')}
@@ -147,12 +152,13 @@ export function ClaudeProgress() {
   const working = run?.phase === 'working'
 
   useEffect(() => {
-    if (!run || working) return
+    // An answer stays while you're reading its steps.
+    if (!run || working || expanded) return
     const t = window.setTimeout(dismiss, ANSWER_SHOWN_MS)
     return () => window.clearTimeout(t)
     // Counts from when the run ends, not from each re-render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run?.id, working])
+  }, [run?.id, working, expanded])
 
   if (!run || dismissed) return null
   const latest = run.steps.filter((s) => s.kind !== 'thought').at(-1)?.text
@@ -167,6 +173,12 @@ export function ClaudeProgress() {
             {run.request && <span className="ask-request">{run.request}</span>}
             <span className="ask-headline" role="status">{headline}</span>
           </span>
+          {run.steps.length > 0 && (
+            <span className="ask-count" aria-hidden="true">
+              {run.steps.length}
+              <Icon name={expanded ? 'up' : 'down'} size={14} />
+            </span>
+          )}
         </button>
         {working ? (
           <button className="icon-button ask-stop" aria-label="Stop Claude" onClick={() => send({ type: 'ask-stop' })}>

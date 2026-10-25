@@ -144,7 +144,7 @@ class InkOverlay(private val shell: AdbShell, private val apk: File) {
 
     companion object {
         /** versionCode in overlay-app/AndroidManifest.xml; raise both together so projectors update. */
-        const val VERSION = 3
+        const val VERSION = 4
 
         /** The versionCode from `pm list packages --show-versioncode`, or null when it isn't installed. */
         fun installedVersion(listing: String): Int? =
@@ -188,6 +188,8 @@ class AgentOverlay(private val overlay: InkOverlay, scope: CoroutineScope, priva
     override fun tap(x: Double, y: Double) = post("agent-tap") { put("x", x); put("y", y) }
     override fun say(text: String) = post("agent-say") { put("text", text) }
     override fun quiet() = post("agent-quiet") {}
+    override fun url(url: String) = post("agent-url") { put("url", url) }
+    override fun scroll(direction: String) = post("agent-scroll") { put("direction", direction) }
 
     private fun post(type: String, fields: JsonObjectBuilder.() -> Unit) {
         val json = buildJsonObject { put("type", type); fields() }.toString()

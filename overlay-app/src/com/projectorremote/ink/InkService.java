@@ -147,6 +147,16 @@ public final class InkService extends Service {
                     break;
                 }
                 case "agent-quiet": main.post(agent::quiet); break;
+                case "agent-url": {
+                    String link = m.optString("url");
+                    main.post(() -> agent.url(link));
+                    break;
+                }
+                case "agent-scroll": {
+                    String direction = m.optString("direction", "down");
+                    main.post(() -> agent.scroll(direction));
+                    break;
+                }
                 case "agent-say": {
                     String text = m.optString("text");
                     main.post(() -> agent.say(text));
