@@ -23,9 +23,10 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url
+  // The tag is the link too: iOS may hand the tap over without the notification's data.
+  const url = event.notification.data?.url ?? event.notification.tag
+  event.waitUntil(clientLog(`sw notificationclick data=${JSON.stringify(event.notification.data ?? null)} tag=${event.notification.tag}`))
   if (!url) return
-  clientLog(`sw notificationclick ${navigator.userAgent.slice(0, 60)}`)
   // iOS always opens the app on a tap and cuts this worker's request short, so there the app
   // projects the link once it's connected; Android can do it in the background.
   if (/iPhone|iPad/.test(navigator.userAgent)) return event.waitUntil(projectInApp(url))
