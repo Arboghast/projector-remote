@@ -9,6 +9,7 @@ import { Dark } from '../dark'
 import { Pads } from '../pads'
 import { Theatre } from '../theatre'
 import { PushToggle } from './PushToggle'
+import { useProjectFromNotification } from './useProjectFromNotification'
 import './app.css'
 
 export type LayoutProps = {
@@ -46,6 +47,7 @@ export function App() {
   const [layoutId, setLayoutId] = useState<LayoutId>(initialLayout)
   const [choosing, setChoosing] = useState(false)
   useWakeLock()
+  useProjectFromNotification(relay.link)
 
   const choose = (id: LayoutId) => {
     setLayoutId(id)
