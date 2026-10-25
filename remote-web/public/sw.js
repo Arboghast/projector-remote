@@ -20,19 +20,41 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = event.notification.data?.url
   if (!url) return
+  // iOS always opens the app on a tap and cuts this worker's request short, so there the app
+  // projects the link once it's connected; Android can do it in the background.
+  if (/iPhone|iPad/.test(navigator.userAgent)) return event.waitUntil(projectInApp(url))
   event.waitUntil(project(url))
 })
 
+// An open remote only gets focused by openWindow, not reloaded, so it's told by message instead.
+async function projectInApp(url) {
+  const [open] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  if (!open) return self.clients.openWindow('/?project=' + encodeURIComponent(url))
+  open.postMessage({ type: 'project', url })
+  await open.focus().catch(() => {})
+}
+
+const ATTEMPTS = 3
+const RETRY_MS = 1500
+
+// A phone just woken by the tap may still be reconnecting Wi-Fi or Tailscale.
 async function project(url) {
-  try {
-    const res = await fetch('/shelf/project', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'url=' + encodeURIComponent(url),
-    })
-    if (res.ok) return
-    await self.registration.showNotification("Couldn't show it", { body: await res.text(), icon: '/icon-192.png' })
-  } catch {
-    await self.registration.showNotification("Couldn't reach the projector", { body: 'Check the Wi-Fi or Tailscale, then try again from the Shelf.', icon: '/icon-192.png' })
+  for (let i = 1; i <= ATTEMPTS; i++) {
+    try {
+      const res = await fetch('/shelf/project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'url=' + encodeURIComponent(url),
+      })
+      if (res.ok) return
+      if (res.status < 500 || i === ATTEMPTS) {
+        return self.registration.showNotification("Couldn't show it", { body: await res.text(), icon: '/icon-192.png' })
+      }
+    } catch {
+      if (i === ATTEMPTS) {
+        return self.registration.showNotification("Couldn't reach the projector", { body: 'Check the Wi-Fi or Tailscale, then try again from the Shelf.', icon: '/icon-192.png' })
+      }
+    }
+    await new Promise((r) => setTimeout(r, RETRY_MS))
   }
 }
