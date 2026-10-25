@@ -8,6 +8,7 @@ import { Shelf } from '../shelf'
 import { Dark } from '../dark'
 import { Pads } from '../pads'
 import { Theatre } from '../theatre'
+import { PushToggle } from './PushToggle'
 import './app.css'
 
 export type LayoutProps = {
@@ -78,6 +79,7 @@ export function App() {
               </button>
             ))}
           </div>
+          <PushToggle />
         </Sheet>
       )}
     </>

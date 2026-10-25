@@ -157,5 +157,5 @@ sealed interface RelayEvent {
     data class State(val state: ProjectorState) : RelayEvent
 
     @Serializable @SerialName("shelf")
-    data class Shelf(val items: List<ShelfItem>) : RelayEvent
+    data class Shelf(val items: List<ShelfItem>, val recent: List<ShelfItem>) : RelayEvent
 }

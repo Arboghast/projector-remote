@@ -56,7 +56,7 @@ export type RelayEvent =
   | { type: 'status'; connected: boolean; device: string }
   | { type: 'error'; message: string }
   | { type: 'state'; state: ProjectorState }
-  | { type: 'shelf'; items: ShelfItem[] }
+  | { type: 'shelf'; items: ShelfItem[]; recent: ShelfItem[] }
 
 const EVENT_TYPES = new Set(['status', 'error', 'state', 'shelf'])
 

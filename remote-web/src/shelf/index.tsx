@@ -4,13 +4,13 @@ import { Composer } from '../shared/Composer'
 import { DPad } from '../shared/DPad'
 import { KeyRow } from '../shared/KeyRow'
 import { focusApp, NowPlayingPill, PlaybackRow } from '../shared/NowPlaying'
-import { ShelfList } from '../shared/Shelf'
+import { RecentList, ShelfList } from '../shared/Shelf'
 import { WallTyping } from '../shared/TextEntry'
 import './shelf.css'
 
 /** Collect now, project later: the queue is the hero; on a wide screen the remote sits beside it. */
 export function Shelf({ relay, openLayouts }: LayoutProps) {
-  const { link, state, shelf, send } = relay
+  const { link, state, shelf, recent, send } = relay
   const app = focusApp(state)
 
   return (
@@ -25,8 +25,11 @@ export function Shelf({ relay, openLayouts }: LayoutProps) {
             <h1>Shelf</h1>
             <span className="muted">{shelf.length ? `${shelf.length} waiting` : ''}</span>
           </div>
-          <ShelfList items={shelf} send={send} />
-          {shelf.length > 0 && <p className="muted shelf-tip">swipe right to project · left to dismiss</p>}
+          <div className="shelf-lists">
+            <ShelfList items={shelf} send={send} />
+            {shelf.length + recent.length > 0 && <p className="muted shelf-tip">swipe right to project · left to dismiss</p>}
+            <RecentList items={recent} send={send} />
+          </div>
           <Composer send={send} newestUrl={shelf[0]?.url} suggestionsAbove />
         </section>
         <aside className="shelf-side">

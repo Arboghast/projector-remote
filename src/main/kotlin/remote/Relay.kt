@@ -21,6 +21,7 @@ import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onSubscription
@@ -43,6 +44,7 @@ class Relay(
     private val screen: ScreenCapture,
     private val stream: ScreenStream,
     private val overlay: InkOverlay,
+    private val push: PushNotifier,
     private val webDir: File,
 ) {
     private val log = LoggerFactory.getLogger(Relay::class.java)
@@ -125,13 +127,10 @@ class Relay(
     }
 
     private suspend fun project(id: String) {
-        // Taking and re-adding would give the link a new id and move it to the top of the shelf.
-        if (!shell.connected.value) throw ProjectorUnavailable("the projector is offline")
-        val item = shelf.take(id) ?: throw InvalidCommand("that link is no longer on the shelf")
-        execute(ProjectorCommand.Open(item.url))?.let { error ->
-            shelf.add(item.url, item.app, item.from) // put it back so nothing is lost
-            throw ProjectorUnavailable(error.message)
-        }
+        val item = shelf.find(id) ?: throw InvalidCommand("that link is no longer on the shelf")
+        // Moved only once it's on the wall, so a failed open leaves the link where it was.
+        execute(ProjectorCommand.Open(item.url))?.let { error -> throw ProjectorUnavailable(error.message) }
+        shelf.shown(item)
     }
 
     fun install(app: Application) = with(app) {
@@ -142,13 +141,13 @@ class Relay(
 
         launch { shell.connected.drop(1).collect { broadcast(status()) } }
         launch { projector.state.drop(1).collect { broadcast(RelayEvent.State(it)) } }
-        launch { shelf.items.drop(1).collect { broadcast(RelayEvent.Shelf(it)) } }
+        launch { combine(shelf.items, shelf.recent, RelayEvent::Shelf).drop(1).collect { broadcast(it) } }
 
         routing {
             get("/health") { call.respond<RelayEvent>(status()) }
             webSocket("/ws") { remoteSession() }
             webSocket("/screen-stream") { screenSession() }
-            shareRoutes(::execute, suggestions)
+            shareRoutes(::execute, suggestions, shelf, push)
             screenRoutes()
             if (webDir.isDirectory) staticFiles("/", webDir) else log.warn("no remote page at {}; build remote-web first", webDir.absolutePath)
         }
@@ -160,7 +159,7 @@ class Relay(
         try {
             sendEvent(status())
             sendEvent(RelayEvent.State(projector.state.value))
-            sendEvent(RelayEvent.Shelf(shelf.items.value))
+            sendEvent(RelayEvent.Shelf(shelf.items.value, shelf.recent.value))
             for (frame in incoming) {
                 if (frame !is Frame.Text) continue
                 val command = try {

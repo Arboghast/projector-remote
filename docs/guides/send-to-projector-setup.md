@@ -50,9 +50,22 @@ This needs the Tailscale add-on. Once the remote is installed from Chrome, Andro
 
 It works the same folded or unfolded. If **Remote** doesn't appear in the share sheet, uninstall the icon and repeat step 2: Android only registers the share option during install.
 
+## Phones: tap the notification to show it now
+
+Once this is on, every link saved to the Shelf (from the iPhone Shortcut, the Galaxy share sheet or the extension) brings up a **Saved to the Shelf** notification on your phone. Tapping it puts the link on the wall and moves it off the Shelf, without opening the remote. If you leave it, the link just waits on the Shelf.
+
+This needs the remote installed from the **Tailscale** address: on the iPhone with **Add to Home Screen** (iOS 16.4 or later), on the Galaxy with **Install app** as above.
+
+1. Open the installed remote and tap the layouts button (top corner).
+2. Tap **Shelf notifications** and allow notifications when the phone asks. It now reads **On**.
+
+Tap it again to turn it off on that phone. If it says **Blocked**, allow notifications for Remote in the phone's settings. If you also use the Shortcut's own **Show Notification**, you'll get two notifications, so you can remove that action.
+
+I tested the relay's side against a stand-in push service and Google's real one. I haven't had a notification arrive on an actual iPhone or Galaxy yet.
+
 ## Windows: the Send to Projector extension
 
-The extension adds a **Send to Projector** button to the browser toolbar and a **Send to Projector** item when you right-click a page, a link, a video or selected text. A notification then names what was saved. It works in Edge and Chrome.
+The extension adds a **Send to Projector** button to the browser toolbar and a **Send to Projector** item when you right-click a page, a link, a video or selected text. A notification then names what was saved; click it to put the link on the wall. It works in Edge and Chrome.
 
 1. Open `edge://extensions` (in Chrome, `chrome://extensions`).
 2. Turn on **Developer mode**.

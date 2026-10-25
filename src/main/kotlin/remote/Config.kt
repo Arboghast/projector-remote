@@ -8,6 +8,8 @@ data class Config(
     val browser: String?,
     val webDir: String,
     val shelfFile: String,
+    val pushFile: String,
+    val pushContact: String,
     val scrcpyServer: String,
     val inkOverlayApk: String,
 ) {
@@ -22,6 +24,9 @@ data class Config(
             browser = (env["PROJECTOR_BROWSER"] ?: "com.phlox.tvwebbrowser").takeIf { it.isNotBlank() },
             webDir = env["WEB_DIR"] ?: "remote-web/dist",
             shelfFile = env["SHELF_FILE"] ?: "shelf.json",
+            pushFile = env["PUSH_FILE"] ?: "push.json",
+            // Push services want a contact for the sender; Apple rejects a missing or malformed one.
+            pushContact = env["PUSH_CONTACT"] ?: "mailto:projector-remote@example.com",
             scrcpyServer = env["SCRCPY_SERVER"] ?: "tools/scrcpy-server-v5.0.1",
             inkOverlayApk = env["INK_OVERLAY_APK"] ?: "tools/ink-overlay.apk",
         )

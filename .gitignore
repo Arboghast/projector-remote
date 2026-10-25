@@ -17,6 +17,8 @@ overlay-app/debug.keystore
 
 # Your saved links
 shelf.json
+# Holds the push signing key and phones' push addresses.
+push.json
 
 # Editors and logs
 .idea/

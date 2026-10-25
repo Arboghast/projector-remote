@@ -27,5 +27,6 @@ ADD --checksum=sha256:764eb6f79811d5211fe9df341120882ba9994c7a61b897d7bf3fb662e5
 COPY tools/ink-overlay.apk tools/
 ENV HOST=0.0.0.0 \
     WEB_DIR=/app/web \
-    SHELF_FILE=/data/shelf.json
+    SHELF_FILE=/data/shelf.json \
+    PUSH_FILE=/data/push.json
 CMD ["bin/projector-remote"]

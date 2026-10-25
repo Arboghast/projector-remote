@@ -11,6 +11,8 @@ export type Relay = {
   error: string | null
   state: ProjectorState
   shelf: ShelfItem[]
+  /** Links already shown on the wall, newest first. */
+  recent: ShelfItem[]
   send: (command: RemoteCommand) => void
 }
 
@@ -29,6 +31,7 @@ export function useRelay(): Relay {
   const [error, setError] = useState<string | null>(null)
   const [state, setState] = useState<ProjectorState>(EMPTY_STATE)
   const [shelf, setShelf] = useState<ShelfItem[]>([])
+  const [recent, setRecent] = useState<ShelfItem[]>([])
 
   useEffect(() => {
     let closed = false
@@ -43,7 +46,7 @@ export function useRelay(): Relay {
           case 'status': setLink(event.connected ? 'ready' : 'projector-off'); break
           case 'error': setError(event.message); break
           case 'state': setState(event.state); break
-          case 'shelf': setShelf(event.items); break
+          case 'shelf': setShelf(event.items); setRecent(event.recent); break
         }
       }
       ws.onclose = () => {
@@ -72,7 +75,7 @@ export function useRelay(): Relay {
     if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(command))
   }, [])
 
-  return { link, error, state, shelf, send }
+  return { link, error, state, shelf, recent, send }
 }
 
 /** Where the phone is, as shown on shelf items ("from iPhone"). */
